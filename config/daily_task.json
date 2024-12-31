@@ -1,0 +1,42 @@
+{
+  "owner": {
+    "user_id": "string",
+    "group_id": "string",
+    "service_account_id": "string"
+  },
+  "config": {
+    "ray_task_config": {
+      "ray_version": "string",
+      "artifact_id": "string",
+      "file_path": "string",
+      "deployment_name": "string",
+      "replica_resource": {
+        "cpu": 6,
+        "ram_gb": 64,
+        "gpu": 2
+      }
+    },
+    "task_scheduling": {
+      "scheduling_daily": {
+        "triggers": [
+          {
+            "timezone": "UTC",
+            "Hour": 0,
+            "minute": 10,
+            "second": 0,
+            "min_replicas": 1,
+            "max_replicas": 2
+          },
+          {
+            "timezone": "UTC",
+            "Hour": 0,
+            "minute": 10,
+            "second": 30,
+            "min_replicas": 1,
+            "max_replicas": 4
+          }
+        ]
+      }
+    }
+  }
+}
