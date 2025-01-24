@@ -1,0 +1,36 @@
+{
+  "config": {
+    "ray_task_config": {
+      "ray_version": "2.40.0-py310-gpu",
+      "file_path": "serve",
+      "deployment_name": "string",
+      "replica_resource": {
+        "cpu": 6,
+        "ram_gb": 64,
+        "gpu": 2
+      }
+    },
+    "task_scheduling": {
+      "scheduling_daily": {
+        "triggers": [
+          {
+            "timezone": "UTC",
+            "Hour": 0,
+            "minute": 10,
+            "second": 0,
+            "min_replicas": 1,
+            "max_replicas": 2
+          },
+          {
+            "timezone": "UTC",
+            "Hour": 0,
+            "minute": 10,
+            "second": 30,
+            "min_replicas": 1,
+            "max_replicas": 4
+          }
+        ]
+      }
+    }
+  }
+}

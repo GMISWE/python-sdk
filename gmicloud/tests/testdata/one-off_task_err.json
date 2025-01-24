@@ -1,0 +1,20 @@
+{
+  "config": {
+    "ray_task_config": {
+      "ray_version": 1,
+      "file_path": "serve",
+      "deployment_name": "string",
+      "replica_resource": {
+        "cpu": 2,
+        "ram_gb": 12,
+        "gpu": 1
+      }
+    },
+    "task_scheduling": {
+      "scheduling_oneoff": {
+        "min_replicas": 1,
+        "max_replicas": 1
+      }
+    }
+  }
+}

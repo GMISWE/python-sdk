@@ -1,0 +1,19 @@
+[build-system]
+requires = ["setuptools", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "gmicloud"
+version = "0.1.2"
+description = "GMI Cloud Python SDK"
+authors = [{ name = "GMI", email = "gmi@gmitec.net" }]
+license = { text = "MIT" }
+dependencies = []
+dynamic = []
+readme = { file = "README.md", content-type = "text/markdown" }
+requires-python = ">=3.6"
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent"
+]
