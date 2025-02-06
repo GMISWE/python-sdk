@@ -2,7 +2,7 @@
 
 ## Overview
 
-Before you start: Our service is currenly invite-only so please contact our team (getstarted@gmicloud.ai) to get invited if you don't have one yet.
+Before you start: Our service and GPU resource is currenly invite-only so please contact our team (getstarted@gmicloud.ai) to get invited if you don't have one yet.
 
 The GMI Inference Engine SDK provides a Python interface for deploying and managing machine learning models in
 production environments. It allows users to create model artifacts, schedule tasks for serving models, and call
