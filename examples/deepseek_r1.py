@@ -4,23 +4,21 @@ from datetime import datetime
 from gmicloud import *
 from examples.completion import call_chat_completion
 
-
-def create_artifact_from_template(client: Client) -> str:
+def create_artifact_from_template(client: Client, template_id: str) -> str:
     artifact_manager = client.artifact_manager
 
     # Get all artifact templates
     templates = artifact_manager.get_artifact_templates()
+    
+    # Search for matching template
     for template in templates:
-        if template.artifact_template_id == "deepseek_r1_template_001":
-            # Create an artifact from a template
-            artifact_id = artifact_manager.create_artifact_from_template(
-                artifact_template_id=template.artifact_template_id,
+        if template.artifact_template_id == template_id:
+            # Create and return artifact
+            return artifact_manager.create_artifact_from_template(
+                artifact_template_id=template.artifact_template_id
             )
-
-            return artifact_id
-
-    return ""
-
+    
+    return ""  # Explicit empty string return for consistency
 
 def create_task_and_start(client: Client, artifact_id: str) -> str:
     artifact_manager = client.artifact_manager
@@ -76,7 +74,7 @@ if __name__ == '__main__':
     cli = Client()
 
     # Create an artifact from a template
-    artifact_id = create_artifact_from_template(cli)
+    artifact_id = create_artifact_from_template(cli, "deepseek_r1_template_001")
 
     # Create a task and start it
     task_id = create_task_and_start(cli, artifact_id)
