@@ -33,7 +33,7 @@ def call_chat_completion(client: Client, task_id: str) -> str:
         except Exception as e:
             raise e
 
-    time.sleep(30)  # Wait for the endpoint to be ready
+    time.sleep(30)  # Wait for the endpoint to be truly ready
     open_ai = OpenAI(
         base_url=os.getenv("OPENAI_API_BASE", f"http://{endpoint_url}/serve/v1/")
     )

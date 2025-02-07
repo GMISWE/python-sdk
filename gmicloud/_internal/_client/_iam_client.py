@@ -49,7 +49,7 @@ class IAMClient:
         custom_headers = {
             CLIENT_ID_HEADER: self._client_id
         }
-        result = self.client.patch("/me/sessions", custom_headers, {"refreshToken": self.refresh_token})
+        result = self.client.patch("/me/sessions", custom_headers, {"refreshToken": self._refresh_token})
 
         resp = LoginResponse.model_validate(result)
         self._access_token = resp.accessToken
