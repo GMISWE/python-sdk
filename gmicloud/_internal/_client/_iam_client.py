@@ -3,7 +3,7 @@ import jwt
 from ._http_client import HTTPClient
 from .._config import IAM_SERVICE_BASE_URL
 from .._models import *
-from .._constants import CLIENT_ID_HEADER
+from .._constants import CLIENT_ID_HEADER, AUTHORIZATION_HEADER
 
 
 class IAMClient:
@@ -90,3 +90,12 @@ class IAMClient:
         Gets the current client ID.
         """
         return self._client_id
+
+    def get_custom_headers(self) -> dict:
+        """
+        Gets the custom headers for the IAM client.
+        """
+        return {
+            AUTHORIZATION_HEADER: f'Bearer {self._access_token}',
+            CLIENT_ID_HEADER: self._client_id
+        }

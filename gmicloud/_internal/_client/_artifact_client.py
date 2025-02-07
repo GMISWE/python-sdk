@@ -5,7 +5,6 @@ from ._iam_client import IAMClient
 from ._decorator import handle_refresh_token
 from .._models import *
 from .._config import ARTIFACT_SERVICE_BASE_URL
-from .._constants import ACCESS_TOKEN_HEADER, CLIENT_ID_HEADER
 
 
 class ArtifactClient:
@@ -33,11 +32,7 @@ class ArtifactClient:
         :return: The Artifact object.
         :rtype: Artifact
         """
-        custom_headers = {
-            ACCESS_TOKEN_HEADER: self.iam_client.get_access_token(),
-            CLIENT_ID_HEADER: self.iam_client.get_client_id()
-        }
-        result = self.client.get(f"/get_artifact", custom_headers, {"artifact_id": artifact_id})
+        result = self.client.get(f"/get_artifact", self.iam_client.get_custom_headers(), {"artifact_id": artifact_id})
 
         return Artifact.model_validate(result)
 
@@ -49,11 +44,7 @@ class ArtifactClient:
         :return: A list of Artifact objects.
         :rtype: List[Artifact]
         """
-        custom_headers = {
-            ACCESS_TOKEN_HEADER: self.iam_client.get_access_token(),
-            CLIENT_ID_HEADER: self.iam_client.get_client_id()
-        }
-        result = self.client.get("/get_all_artifacts", custom_headers)
+        result = self.client.get("/get_all_artifacts", self.iam_client.get_custom_headers())
         if not result:
             return []
         return [Artifact.model_validate(item) for item in result]
@@ -67,11 +58,7 @@ class ArtifactClient:
         :return: The response object containing the created artifact details.
         :rtype: CreateArtifactResponse
         """
-        custom_headers = {
-            ACCESS_TOKEN_HEADER: self.iam_client.get_access_token(),
-            CLIENT_ID_HEADER: self.iam_client.get_client_id()
-        }
-        result = self.client.post("/create_artifact", custom_headers, request.model_dump())
+        result = self.client.post("/create_artifact", self.iam_client.get_custom_headers(), request.model_dump())
 
         return CreateArtifactResponse.model_validate(result)
 
@@ -84,11 +71,7 @@ class ArtifactClient:
         :return: The response object containing the created artifact details.
         :rtype: CreateArtifactFromTemplateResponse
         """
-        custom_headers = {
-            ACCESS_TOKEN_HEADER: self.iam_client.get_access_token(),
-            CLIENT_ID_HEADER: self.iam_client.get_client_id()
-        }
-        result = self.client.post("/create_artifact_from_template", custom_headers,
+        result = self.client.post("/create_artifact_from_template", self.iam_client.get_custom_headers(),
                                   {"artifact_template_id": artifact_template_id})
 
         return CreateArtifactFromTemplateResponse.model_validate(result)
@@ -102,11 +85,8 @@ class ArtifactClient:
         :return: The response object containing the rebuilt artifact details.
         :rtype: RebuildArtifactResponse
         """
-        custom_headers = {
-            ACCESS_TOKEN_HEADER: self.iam_client.get_access_token(),
-            CLIENT_ID_HEADER: self.iam_client.get_client_id()
-        }
-        result = self.client.post("/rebuild_artifact", custom_headers, {"artifact_id": artifact_id})
+        result = self.client.post("/rebuild_artifact", self.iam_client.get_custom_headers(),
+                                  {"artifact_id": artifact_id})
 
         return CreateArtifactResponse.model_validate(result)
 
@@ -119,11 +99,8 @@ class ArtifactClient:
         :return: The response object containing the deleted artifact details.
         :rtype: DeleteArtifactResponse
         """
-        custom_headers = {
-            ACCESS_TOKEN_HEADER: self.iam_client.get_access_token(),
-            CLIENT_ID_HEADER: self.iam_client.get_client_id()
-        }
-        result = self.client.delete("/delete_artifact", custom_headers, {"artifact_id": artifact_id})
+        result = self.client.delete("/delete_artifact", self.iam_client.get_custom_headers(),
+                                    {"artifact_id": artifact_id})
 
         return DeleteArtifactResponse.model_validate(result)
 
@@ -136,11 +113,7 @@ class ArtifactClient:
         :return: The response object containing the pre-signed URL and upload details.
         :rtype: GetBigFileUploadUrlResponse
         """
-        custom_headers = {
-            ACCESS_TOKEN_HEADER: self.iam_client.get_access_token(),
-            CLIENT_ID_HEADER: self.iam_client.get_client_id()
-        }
-        result = self.client.post("/get_bigfile_upload_url", custom_headers, request.model_dump())
+        result = self.client.post("/get_bigfile_upload_url", self.iam_client.get_custom_headers(), request.model_dump())
 
         return GetBigFileUploadUrlResponse.model_validate(result)
 
@@ -153,11 +126,7 @@ class ArtifactClient:
         :return: The response object containing the deletion status.
         :rtype: DeleteBigfileResponse
         """
-        custom_headers = {
-            ACCESS_TOKEN_HEADER: self.iam_client.get_access_token(),
-            CLIENT_ID_HEADER: self.iam_client.get_client_id()
-        }
-        result = self.client.delete("/delete_bigfile", custom_headers, request.dict())
+        result = self.client.delete("/delete_bigfile", self.iam_client.get_custom_headers(), request.dict())
 
         return DeleteBigfileResponse.model_validate(result)
 
@@ -169,9 +138,5 @@ class ArtifactClient:
         :return: A list of ArtifactTemplate objects.
         :rtype: List[ArtifactTemplate]
         """
-        custom_headers = {
-            ACCESS_TOKEN_HEADER: self.iam_client.get_access_token(),
-            CLIENT_ID_HEADER: self.iam_client.get_client_id()
-        }
-        result = self.client.get("/get_artifact_templates", custom_headers)
+        result = self.client.get("/get_artifact_templates", self.iam_client.get_custom_headers())
         return GetArtifactTemplatesResponse.model_validate(result)

@@ -3,7 +3,6 @@ from ._decorator import handle_refresh_token
 from ._iam_client import IAMClient
 from .._config import TASK_SERVICE_BASE_URL
 from .._models import *
-from .._constants import ACCESS_TOKEN_HEADER, CLIENT_ID_HEADER
 
 
 class TaskClient:
@@ -30,11 +29,7 @@ class TaskClient:
         :return: An instance of Task containing the details of the retrieved task.
         :rtype: Task
         """
-        custom_headers = {
-            ACCESS_TOKEN_HEADER: self.iam_client.get_access_token(),
-            CLIENT_ID_HEADER: self.iam_client.get_client_id()
-        }
-        result = self.client.get("/get_task", custom_headers, {"task_id": task_id})
+        result = self.client.get("/get_task", self.iam_client.get_custom_headers(), {"task_id": task_id})
 
         return Task.model_validate(result)
 
@@ -46,11 +41,7 @@ class TaskClient:
         :return: An instance of GetAllTasksResponse containing the retrieved tasks.
         :rtype: GetAllTasksResponse
         """
-        custom_headers = {
-            ACCESS_TOKEN_HEADER: self.iam_client.get_access_token(),
-            CLIENT_ID_HEADER: self.iam_client.get_client_id()
-        }
-        result = self.client.get("/get_tasks", custom_headers)
+        result = self.client.get("/get_tasks", self.iam_client.get_custom_headers())
         if not result:
             return GetAllTasksResponse(tasks=[])
 
@@ -63,12 +54,7 @@ class TaskClient:
 
         :param task: The Task object containing the details of the task to be created.
         """
-        custom_headers = {
-            ACCESS_TOKEN_HEADER: self.iam_client.get_access_token(),
-            CLIENT_ID_HEADER: self.iam_client.get_client_id()
-        }
-
-        result = self.client.post("/create_task", custom_headers, task.model_dump())
+        result = self.client.post("/create_task", self.iam_client.get_custom_headers(), task.model_dump())
 
         return CreateTaskResponse.model_validate(result)
 
@@ -79,11 +65,7 @@ class TaskClient:
 
         :param task: The Task object containing the updated task details.
         """
-        custom_headers = {
-            ACCESS_TOKEN_HEADER: self.iam_client.get_access_token(),
-            CLIENT_ID_HEADER: self.iam_client.get_client_id()
-        }
-        self.client.put("/update_schedule", custom_headers, task.model_dump())
+        self.client.put("/update_schedule", self.iam_client.get_custom_headers(), task.model_dump())
 
     @handle_refresh_token
     def start_task(self, task_id: str):
@@ -92,11 +74,7 @@ class TaskClient:
 
         :param task_id: The ID of the task to be started.
         """
-        custom_headers = {
-            ACCESS_TOKEN_HEADER: self.iam_client.get_access_token(),
-            CLIENT_ID_HEADER: self.iam_client.get_client_id()
-        }
-        self.client.post("/start_task", custom_headers, {"task_id": task_id})
+        self.client.post("/start_task", self.iam_client.get_custom_headers(), {"task_id": task_id})
 
     @handle_refresh_token
     def stop_task(self, task_id: str):
@@ -105,11 +83,7 @@ class TaskClient:
 
         :param task_id: The ID of the task to be stopped.
         """
-        custom_headers = {
-            ACCESS_TOKEN_HEADER: self.iam_client.get_access_token(),
-            CLIENT_ID_HEADER: self.iam_client.get_client_id()
-        }
-        self.client.post("/stop_task", custom_headers, {"task_id": task_id})
+        self.client.post("/stop_task", self.iam_client.get_custom_headers(), {"task_id": task_id})
 
     @handle_refresh_token
     def get_usage_data(self, start_timestamp: str, end_timestamp: str) -> GetUsageDataResponse:
@@ -119,11 +93,7 @@ class TaskClient:
         :param start_timestamp: The start timestamp of the usage data.
         :param end_timestamp: The end timestamp of the usage data.
         """
-        custom_headers = {
-            ACCESS_TOKEN_HEADER: self.iam_client.get_access_token(),
-            CLIENT_ID_HEADER: self.iam_client.get_client_id()
-        }
-        result = self.client.get("/get_usage_data", custom_headers,
+        result = self.client.get("/get_usage_data", self.iam_client.get_custom_headers(),
                                  {"start_timestamp": start_timestamp, "end_timestamp": end_timestamp})
 
         return result
@@ -135,8 +105,4 @@ class TaskClient:
 
         :param task_id: The ID of the task to be archived.
         """
-        custom_headers = {
-            ACCESS_TOKEN_HEADER: self.iam_client.get_access_token(),
-            CLIENT_ID_HEADER: self.iam_client.get_client_id()
-        }
-        self.client.post("/archive_task", custom_headers, {"task_id": task_id})
+        self.client.post("/archive_task", self.iam_client.get_custom_headers(), {"task_id": task_id})

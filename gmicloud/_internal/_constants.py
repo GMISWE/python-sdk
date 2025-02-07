@@ -1,4 +1,5 @@
 ACCEPT_HEADER = 'Accept'
+AUTHORIZATION_HEADER = 'Authorization'
 CONTENT_TYPE_HEADER = 'Content-Type'
 CLIENT_ID_HEADER = 'CE-ClientId'
 ACCESS_TOKEN_HEADER = 'CE-AccessToken'
