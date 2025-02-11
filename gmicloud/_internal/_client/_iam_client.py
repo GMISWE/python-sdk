@@ -34,12 +34,35 @@ class IAMClient:
         custom_headers = {
             CLIENT_ID_HEADER: self._client_id
         }
-        req = LoginRequest(email=self._email, password=self._password)
-        result = self.client.post("/me/sessions", custom_headers, req.model_dump())
+        req = AuthTokenRequest(email=self._email, password=self._password)
+        auth_tokens_result = self.client.post("/me/auth-tokens", custom_headers, req.model_dump())
+        auth_tokens_resp = AuthTokenResponse.model_validate(auth_tokens_result)
 
-        resp = LoginResponse.model_validate(result)
-        self._access_token = resp.accessToken
-        self._refresh_token = resp.refreshToken
+        create_session_result = None
+        if auth_tokens_resp.is2FARequired:
+            max_attempts = 3
+            for attempt in range(max_attempts):
+                code = input(f"Attempt {attempt + 1}/{max_attempts}: Please enter the 2FA code: ")
+
+                create_session_req = CreateSessionRequest(
+                    type="native", authToken=auth_tokens_resp.authToken, otpCode=code
+                )
+                try:
+                    create_session_result = self.client.post(
+                        "/me/sessions", custom_headers, create_session_req.model_dump()
+                    )
+                    break
+                except Exception as e:
+                    print("Invalid 2FA code, please try again.")
+                    if attempt == max_attempts - 1:
+                        raise Exception("Failed to create session after 3 incorrect 2FA attempts.") from e
+        else:
+            create_session_req = CreateSessionRequest(type="native", authToken=auth_tokens_resp.authToken, otpCode=None)
+            create_session_result = self.client.post("/me/sessions", custom_headers, create_session_req.model_dump())
+
+        create_session_resp = CreateSessionResponse.model_validate(create_session_result)
+        self._access_token = create_session_resp.accessToken
+        self._refresh_token = create_session_resp.refreshToken
         self._user_id = self.parse_user_id()
 
     def refresh_token(self):
@@ -51,7 +74,7 @@ class IAMClient:
         }
         result = self.client.patch("/me/sessions", custom_headers, {"refreshToken": self._refresh_token})
 
-        resp = LoginResponse.model_validate(result)
+        resp = CreateSessionResponse.model_validate(result)
         self._access_token = resp.accessToken
         self._refresh_token = resp.refreshToken
 

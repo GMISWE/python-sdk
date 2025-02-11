@@ -1,8 +1,11 @@
+import logging
+
 import requests
 from .._exceptions import APIError
 from .._exceptions import UnauthorizedError
 from .._constants import *
-from .._config import *
+
+logger = logging.getLogger(__name__)
 
 
 class HTTPClient:
@@ -62,6 +65,7 @@ class HTTPClient:
                 raise APIError(f"HTTP Request failed: {error_message}")
             # Raise for HTTP errors
             response.raise_for_status()
+            logger.debug(response.text)
 
         except requests.exceptions.RequestException as e:
             raise APIError(f"HTTP Request failed: {str(e)}")
