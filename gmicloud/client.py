@@ -1,5 +1,6 @@
 import os
 import time
+import logging
 
 from typing import Optional
 
@@ -8,6 +9,8 @@ from ._internal._manager._artifact_manager import ArtifactManager
 from ._internal._manager._task_manager import TaskManager
 from ._internal._enums import BuildStatus
 from ._internal._models import Task, TaskConfig, RayTaskConfig, TaskScheduling, ReplicaResource
+
+logger = logging.getLogger(__name__)
 
 
 class Client:
@@ -63,11 +66,13 @@ class Client:
             raise ValueError("Template does not contain resource configuration.")
 
         artifact_id = artifact_manager.create_artifact_from_template(artifact_template_id)
+
+        logger.info(f"Successfully created artifact from template, artifact_id: {artifact_id}")
         # Wait for the artifact to be ready
         while True:
             try:
                 artifact = artifact_manager.get_artifact(artifact_id)
-                print(f"Artifact status: {artifact.build_status}")
+                logger.info(f"Successfully got artifact info, artifact status: {artifact.build_status}")
                 # Wait until the artifact is ready
                 if artifact.build_status == BuildStatus.SUCCESS:
                     break
@@ -94,8 +99,10 @@ class Client:
                 ),
             ))
 
+            logger.info(f"Successfully created task, task_id: {task.task_id}")
             # Start the task
             task_manager.start_task(task.task_id)
+            logger.info(f"Successfully started task, task_id: {task.task_id}")
         except Exception as e:
             raise e
 

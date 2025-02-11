@@ -1,15 +1,24 @@
 import time
 from datetime import datetime
+import os
+import sys
+import logging
+
+# To allow this script to be executed from other directories
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 from gmicloud import *
 from examples.completion import call_chat_completion
+
+logger = logging.getLogger(__name__)
+
 
 def create_artifact_from_template(client: Client, template_id: str) -> str:
     artifact_manager = client.artifact_manager
 
     # Get all artifact templates
     templates = artifact_manager.get_artifact_templates()
-    
+
     # Search for matching template
     for template in templates:
         if template.artifact_template_id == template_id:
@@ -17,8 +26,9 @@ def create_artifact_from_template(client: Client, template_id: str) -> str:
             return artifact_manager.create_artifact_from_template(
                 artifact_template_id=template.artifact_template_id
             )
-    
+
     return ""  # Explicit empty string return for consistency
+
 
 def create_task_and_start(client: Client, artifact_id: str) -> str:
     artifact_manager = client.artifact_manager
@@ -26,7 +36,7 @@ def create_task_and_start(client: Client, artifact_id: str) -> str:
     while True:
         try:
             artifact = artifact_manager.get_artifact(artifact_id)
-            print(f"Artifact status: {artifact.build_status}")
+            logger.info(f"Successfully got artifact info, artifact status: {artifact.build_status}")
             # Wait until the artifact is ready
             if artifact.build_status == BuildStatus.SUCCESS:
                 break
@@ -61,23 +71,25 @@ def create_task_and_start(client: Client, artifact_id: str) -> str:
             ),
         ))
 
+        logger.info(f"Successfully created task, task_id: {task.task_id}")
         # Start the task
         task_manager.start_task(task.task_id)
+        logger.info(f"Successfully started task, task_id: {task.task_id}")
     except Exception as e:
         raise e
 
     return task.task_id
 
 
-if __name__ == '__main__':
-    # Initialize the Client
-    cli = Client()
+# Initialize the Client
+cli = Client()
 
-    # Create an artifact from a template
-    artifact_id = create_artifact_from_template(cli, "deepseek_r1_template_001")
+# Create an artifact from a template
+artifact_id = create_artifact_from_template(cli, "deepseek_r1_template_001")
+logger.info(f"Successfully created artifact from template, artifact_id: {artifact_id}")
 
-    # Create a task and start it
-    task_id = create_task_and_start(cli, artifact_id)
+# Create a task and start it
+task_id = create_task_and_start(cli, artifact_id)
 
-    # Call chat completion
-    print(call_chat_completion(cli, task_id))
+# Call chat completion
+print(call_chat_completion(cli, task_id))

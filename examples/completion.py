@@ -1,9 +1,12 @@
 import os
 import time
+import logging
 
 from gmicloud import *
 
 from openai import OpenAI
+
+logger = logging.getLogger(__name__)
 
 
 def call_chat_completion(client: Client, task_id: str) -> str:
@@ -15,16 +18,16 @@ def call_chat_completion(client: Client, task_id: str) -> str:
             # Wait for 5 seconds
             time.sleep(5)
             task = task_manager.get_task(task_id)
-            print(f"task status: {task.task_status}")
+            logger.info(f"Successfully got task info, task status: {task.task_status}")
             # Wait until the task is running
             if task.task_status != "running":
                 continue
-            print(f"endpoint info status: {task.endpoint_info.endpoint_status}")
+            logger.info(f"Endpoint info status: {task.endpoint_info.endpoint_status}")
             if task.endpoint_info.endpoint_status == TaskEndpointStatus.RUNNING:
                 endpoint_url = task.endpoint_info.endpoint_url
                 break
             for endpoint in task.cluster_endpoints:
-                print(f"cluster endpoint info status: {endpoint.endpoint_status}")
+                logger.info(f"Cluster endpoint info status: {endpoint.endpoint_status}")
                 if endpoint.endpoint_status == TaskEndpointStatus.RUNNING:
                     endpoint_url = endpoint.endpoint_url
                     break
@@ -48,7 +51,6 @@ def call_chat_completion(client: Client, task_id: str) -> str:
         max_tokens=2000,
         temperature=0.7
     )
-
-    print(completion)
+    logger.info("Successfully called chat completion")
 
     return completion.choices[0].message.content

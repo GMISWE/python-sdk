@@ -307,9 +307,34 @@ class CreateTaskResponse(BaseModel):
     upload_link: str  # URL to upload the task data.
 
 
-class LoginResponse(BaseModel):
+class AuthTokenRequest(BaseModel):
+    """
+    Request object for user login.
+    """
+    email: str  # User email.
+    password: str  # User password.
+
+
+class AuthTokenResponse(BaseModel):
     """
     Response object for user login.
+    """
+    authToken: str  # Access token for the user session.
+    is2FARequired: bool  # Indicates if 2FA is required for the user.
+
+
+class CreateSessionRequest(BaseModel):
+    """
+    Request object for creating a user session.
+    """
+    type: str  # Type of the session (e.g., native).
+    authToken: str  # Access token for the user session.
+    otpCode: Optional[str]  # 2FA code for the user session.
+
+
+class CreateSessionResponse(BaseModel):
+    """
+    Response object for creating a user session.
     """
     accessToken: str  # Access token for the user session.
     refreshToken: str  # Refresh token for the user session.

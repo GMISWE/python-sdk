@@ -1,16 +1,11 @@
 # GMICloud SDK (Beta)
 
 ## Overview
-
 Before you start: Our service and GPU resource is currenly invite-only so please contact our team (getstarted@gmicloud.ai) to get invited if you don't have one yet.
 
-The GMI Inference Engine SDK provides a Python interface for deploying and managing machine learning models in
-production environments. It allows users to create model artifacts, schedule tasks for serving models, and call
-inference APIs easily.
+The GMI Inference Engine SDK provides a Python interface for deploying and managing machine learning models in production environments. It allows users to create model artifacts, schedule tasks for serving models, and call inference APIs easily.
 
-This SDK streamlines the process of utilizing GMI Cloud capabilities such as deploying models with Kubernetes-based Ray
-services, managing resources automatically, and accessing model inference endpoints. With minimal setup, developers can
-focus on building ML solutions instead of infrastructure.
+This SDK streamlines the process of utilizing GMI Cloud capabilities such as deploying models with Kubernetes-based Ray services, managing resources automatically, and accessing model inference endpoints. With minimal setup, developers can focus on building ML solutions instead of infrastructure.
 
 ## Features
 
@@ -52,7 +47,18 @@ client = Client(client_id="<YOUR_CLIENT_ID>", email="<YOUR_EMAIL>", password="<Y
 
 ## Quick Start
 
-### 1. Create a Task from an Artifact Template
+### 1. How to run the code in the example folder
+```bash
+cd path/to/gmicloud-sdk
+# Create a virtual environment
+python -m venv venv
+source venv/bin/activate
+
+pip install -r requirements.txt
+python -m examples.create_task_from_artifact_template.py
+```
+
+### 2. Create a Task from an Artifact Template
 
 This is the simplest example to deploy an existing artifact template:
 
@@ -81,24 +87,30 @@ response = call_chat_completion(client, task.task_id)
 print(response)
 ```
 
-### 2. Step-by-Step Example: Create Artifact, Task, and Query the Endpoint
+### 3. Step-by-Step Example: Create Artifact, Task, and Query the Endpoint
 
 #### (a) Create an Artifact from a Template
 
 First, you’ll retrieve all templates and create an artifact based on the desired template (e.g., "Llama3.1 8B"):
 
 ```python
-def create_artifact_from_template(client):
+from gmicloud import *
+
+def create_artifact_from_template(client: Client) -> str:
     artifact_manager = client.artifact_manager
 
-    # List all available templates
+    # Get all artifact templates
     templates = artifact_manager.get_artifact_templates()
     for template in templates:
         if template.artifact_template_id == "qwen_2.5_14b_instruct_template_001":
-            return artifact_manager.create_artifact_from_template(
-                artifact_template_id=template.artifact_template_id
+            # Create an artifact from a template
+            artifact_id = artifact_manager.create_artifact_from_template(
+                artifact_template_id=template.artifact_template_id,
             )
-    return None
+
+            return artifact_id
+
+    return ""
 ```
 
 #### (b) Create a Task from the Artifact
@@ -106,43 +118,55 @@ def create_artifact_from_template(client):
 Wait until the artifact becomes "ready" and then deploy it using task scheduling:
 
 ```python
-def create_task_and_start(client, artifact_id):
+from gmicloud import *
+import time
+from datetime import datetime
+
+def create_task_and_start(client: Client, artifact_id: str) -> str:
     artifact_manager = client.artifact_manager
-
-    # Wait until the artifact is ready
+    # Wait for the artifact to be ready
     while True:
-        artifact = artifact_manager.get_artifact(artifact_id)
-        if artifact.build_status == "SUCCESS":
-            break
-        print("Waiting for artifact to be ready...")
+        try:
+            artifact = artifact_manager.get_artifact(artifact_id)
+            print(f"Artifact status: {artifact.build_status}")
+            # Wait until the artifact is ready
+            if artifact.build_status == BuildStatus.SUCCESS:
+                break
+        except Exception as e:
+            raise e
+        # Wait for 2 seconds
         time.sleep(2)
-
-    # Configure and start the task
-    task_manager = client.task_manager
-    task = task_manager.create_task(Task(
-        config=TaskConfig(
-            ray_task_config=RayTaskConfig(
-                ray_version="2.40.0-py310-gpu",
-                file_path="serve",
-                artifact_id=artifact_id,
-                deployment_name="app",
-                replica_resource=ReplicaResource(
-                    cpu=10,
-                    ram_gb=100,
-                    gpu=1,
+    try:
+        task_manager = client.task_manager
+        # Create a task
+        task = task_manager.create_task(Task(
+            config=TaskConfig(
+                ray_task_config=RayTaskConfig(
+                    ray_version="2.40.0-py310-gpu",
+                    file_path="serve",
+                    artifact_id=artifact_id,
+                    deployment_name="app",
+                    replica_resource=ReplicaResource(
+                        cpu=10,
+                        ram_gb=100,
+                        gpu=1,
+                    ),
+                ),
+                task_scheduling=TaskScheduling(
+                    scheduling_oneoff=OneOffScheduling(
+                        trigger_timestamp=int(datetime.now().timestamp()) + 10,
+                        min_replicas=1,
+                        max_replicas=10,
+                    )
                 ),
             ),
-            task_scheduling=TaskScheduling(
-                scheduling_oneoff=OneOffScheduling(
-                    trigger_timestamp=int(datetime.now().timestamp()) + 10,
-                    min_replicas=1,
-                    max_replicas=10,
-                )
-            ),
-        ),
-    ))
+        ))
 
-    task_manager.start_task(task.task_id)
+        # Start the task
+        task_manager.start_task(task.task_id)
+    except Exception as e:
+        raise e
+
     return task.task_id
 ```
 
@@ -151,14 +175,20 @@ def create_task_and_start(client, artifact_id):
 Once the task is running, use the endpoint for inference:
 
 ```python
+from gmicloud import *
 from examples.completion import call_chat_completion
 
-client = Client()
-artifact_id = create_artifact_from_template(client)
-task_id = create_task_and_start(client, artifact_id)
+# Initialize the Client
+cli = Client()
 
-response = call_chat_completion(client, task_id)
-print(response)
+# Create an artifact from a template
+artifact_id = create_artifact_from_template(cli)
+
+# Create a task and start it
+task_id = create_task_and_start(cli, artifact_id)
+
+# Call chat completion
+print(call_chat_completion(cli, task_id))
 ```
 
 ## API Reference
@@ -187,10 +217,10 @@ password: Optional[str] = ""
 
 ## Notes & Troubleshooting
 
-Ensure Credentials are Correct: Double-check your environment variables or parameters passed into the Client object.
-Artifact Status: It may take a few minutes for an artifact or task to transition to the "running" state.
-Inference Endpoint Readiness: Use the task endpoint only after the task status changes to "running".
-Default OpenAI Key: By default, the OpenAI API base URL is derived from the endpoint provided by GMI.
+* Ensure Credentials are Correct: Double-check your environment variables or parameters passed into the Client object.
+* Artifact Status: It may take a few minutes for an artifact or task to transition to the "running" state.
+* Inference Endpoint Readiness: Use the task endpoint only after the task status changes to "running".
+* Default OpenAI Key: By default, the OpenAI API base URL is derived from the endpoint provided by GMI.
 
 ## Contributing
 
