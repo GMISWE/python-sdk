@@ -23,3 +23,11 @@ class TaskEndpointStatus(str, Enum):
     READY = "ready"
     UNREADY = "unready"
     NEW = "new"
+
+class TaskStatus(str, Enum):
+    IDLE = "idle"
+    STARTING = "starting"
+    IN_QUEUE = "in-queue"
+    RUNNING = "running"
+    NEEDSTOP = "needstop"
+    ARCHIVED = "archived"
