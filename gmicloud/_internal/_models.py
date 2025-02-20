@@ -2,7 +2,7 @@ from typing import Optional, List
 from datetime import datetime
 
 from pydantic import BaseModel
-from gmicloud._internal._enums import BuildStatus, TaskEndpointStatus
+from gmicloud._internal._enums import BuildStatus, TaskStatus,TaskEndpointStatus
 
 
 class BigFileMetadata(BaseModel):
@@ -24,6 +24,7 @@ class ArtifactMetadata(BaseModel):
     artifact_description: Optional[str] = ""  # Description of the artifact.
     artifact_tags: Optional[List[str]] = ""  # Comma-separated tags for categorizing the artifact.
     artifact_volume_path: Optional[str] = ""  # Path to the volume where the artifact is stored.
+    artifact_template_id: Optional[str] = ""  # The template ID used to create this artifact.
 
 
 class ArtifactData(BaseModel):
@@ -159,6 +160,7 @@ class ResourcesTemplate(BaseModel):
     cpu: Optional[int] = 0  # Number of CPU cores allocated.
     memory: Optional[int] = 0  # Amount of RAM (in GB) allocated.
     gpu: Optional[int] = 0  # Number of GPUs allocated.
+    gpu_name: Optional[str] = ""  # Type the GPU allocated.
 
 
 class CreateArtifactFromTemplateRequest(BaseModel):
@@ -290,7 +292,7 @@ class Task(BaseModel):
     config: Optional[TaskConfig] = None  # Configuration data for the task.
     endpoint_info: Optional[EndpointInfo] = None  # Additional information about the task endpoint.
     cluster_endpoints: Optional[List[EndpointInfo]] = None  # Endpoints for the task cluster.
-    task_status: Optional[str] = ""  # Status of the task.
+    task_status: Optional[TaskStatus] = ""  # Status of the task.
     readiness_status: Optional[str] = ""  # Readiness status of the task.
     user_preference: Optional[UserPreference] = None  # User preference for the task.
 

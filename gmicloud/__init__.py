@@ -19,7 +19,8 @@ from ._internal._models import (
 )
 from ._internal._enums import (
     BuildStatus,
-    TaskEndpointStatus
+    TaskEndpointStatus,
+    TaskStatus
 )
 from .client import Client
 
