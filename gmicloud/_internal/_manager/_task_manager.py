@@ -37,7 +37,11 @@ class TaskManager:
 
         :return: A list of `Task` objects.
         """
-        return self.task_client.get_all_tasks(self.iam_client.get_user_id()).tasks
+        resp = self.task_client.get_all_tasks(self.iam_client.get_user_id())
+        if not resp or not resp.tasks:
+            return []
+
+        return resp.tasks
 
     def create_task(self, task: Task) -> Task:
         """
@@ -51,8 +55,11 @@ class TaskManager:
         self._validate_task(task)
         if not task.owner:
             task.owner = TaskOwner(user_id=self.iam_client.get_user_id())
+        resp = self.task_client.create_task(task)
+        if not resp or not resp.task:
+            raise ValueError("Failed to create task.")
 
-        return self.task_client.create_task(task).task
+        return resp.task
 
     def create_task_from_file(self, artifact_id: str, config_file_path: str, trigger_timestamp: int = None) -> Task:
         """
@@ -76,7 +83,7 @@ class TaskManager:
 
         return self.create_task(task)
 
-    def update_task_schedule(self, task: Task):
+    def update_task_schedule(self, task: Task) -> bool:
         """
         Update the schedule of an existing task.
 
@@ -87,10 +94,10 @@ class TaskManager:
         self._validate_task(task)
         self._validate_not_empty(task.task_id, "Task ID")
 
-        self.task_client.update_task_schedule(task)
+        return self.task_client.update_task_schedule(task)
 
     def update_task_schedule_from_file(self, artifact_id: str, task_id: str, config_file_path: str,
-                                       trigger_timestamp: int = None):
+                                       trigger_timestamp: int = None) -> bool:
         """
         Update the schedule of an existing task using data from a file. The file should contain a valid task definition.
 
@@ -112,9 +119,9 @@ class TaskManager:
         if trigger_timestamp:
             task.config.task_scheduling.scheduling_oneoff.trigger_timestamp = trigger_timestamp
 
-        self.update_task_schedule(task)
+        return self.update_task_schedule(task)
 
-    def start_task(self, task_id: str):
+    def start_task(self, task_id: str) -> bool:
         """
         Start a task by its ID.
 
@@ -124,9 +131,9 @@ class TaskManager:
         """
         self._validate_not_empty(task_id, "Task ID")
 
-        self.task_client.start_task(task_id)
+        return self.task_client.start_task(task_id)
 
-    def stop_task(self, task_id: str):
+    def stop_task(self, task_id: str) -> bool:
         """
         Stop a task by its ID.
 
@@ -136,7 +143,7 @@ class TaskManager:
         """
         self._validate_not_empty(task_id, "Task ID")
 
-        self.task_client.stop_task(task_id)
+        return self.task_client.stop_task(task_id)
 
     def get_usage_data(self, start_timestamp: str, end_timestamp: str) -> GetUsageDataResponse:
         """
@@ -151,7 +158,7 @@ class TaskManager:
 
         return self.task_client.get_usage_data(start_timestamp, end_timestamp)
 
-    def archive_task(self, task_id: str):
+    def archive_task(self, task_id: str) -> bool:
         """
         Archive a task by its ID.
 
@@ -161,7 +168,7 @@ class TaskManager:
         """
         self._validate_not_empty(task_id, "Task ID")
 
-        self.task_client.archive_task(task_id)
+        return self.task_client.archive_task(task_id)
 
     @staticmethod
     def _validate_not_empty(value: str, name: str):

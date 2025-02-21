@@ -81,7 +81,11 @@ class ArtifactManager:
         if not artifact_template_id or not artifact_template_id.strip():
             raise ValueError("Artifact template ID is required and cannot be empty.")
 
-        return self.artifact_client.create_artifact_from_template(artifact_template_id).artifact_id
+        resp = self.artifact_client.create_artifact_from_template(artifact_template_id)
+        if not resp or not resp.artifact_id:
+            raise ValueError("Failed to create artifact from template.")
+
+        return resp.artifact_id
 
     def rebuild_artifact(self, artifact_id: str) -> RebuildArtifactResponse:
         """
@@ -170,7 +174,11 @@ class ArtifactManager:
 
         req = GetBigFileUploadUrlRequest(artifact_id=artifact_id, file_name=model_file_name, file_type=model_file_type)
 
-        return self.artifact_client.get_bigfile_upload_url(req).upload_link
+        resp = self.artifact_client.get_bigfile_upload_url(req)
+        if not resp or not resp.upload_link:
+            raise ValueError("Failed to get bigfile upload URL.")
+
+        return resp.upload_link
 
     def delete_bigfile(self, artifact_id: str, file_name: str) -> str:
         """
@@ -182,7 +190,11 @@ class ArtifactManager:
         self._validate_artifact_id(artifact_id)
         self._validate_file_name(file_name)
 
-        return self.artifact_client.delete_bigfile(artifact_id, file_name).status
+        resp = self.artifact_client.delete_bigfile(artifact_id, file_name)
+        if not resp or not resp.status:
+            raise ValueError("Failed to delete bigfile.")
+
+        return resp.status
 
     def upload_large_file(self, upload_link: str, file_path: str) -> None:
         """
@@ -236,7 +248,7 @@ class ArtifactManager:
         :return: A list of ArtifactTemplate objects.
         :rtype: List[ArtifactTemplate]
         """
-        return self.artifact_client.get_artifact_templates().artifact_templates
+        return self.artifact_client.get_artifact_templates()
 
     @staticmethod
     def _validate_file_name(file_name: str) -> None:

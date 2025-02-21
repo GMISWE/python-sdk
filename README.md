@@ -33,6 +33,7 @@ Set the following environment variables:
 export GMI_CLOUD_CLIENT_ID=<YOUR_CLIENT_ID>
 export GMI_CLOUD_EMAIL=<YOUR_EMAIL>
 export GMI_CLOUD_PASSWORD=<YOUR_PASSWORD>
+export GMI_CLOUD_API_KEY=<YOUR_API_KEY>
 ```
 
 ### Option 2: Passing Credentials as Parameters
