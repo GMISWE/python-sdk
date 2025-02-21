@@ -2,7 +2,7 @@ from typing import Optional, List
 from datetime import datetime
 
 from pydantic import BaseModel
-from gmicloud._internal._enums import BuildStatus, TaskStatus,TaskEndpointStatus
+from gmicloud._internal._enums import BuildStatus, TaskStatus, TaskEndpointStatus
 
 
 class BigFileMetadata(BaseModel):
@@ -375,3 +375,73 @@ class LoginRequest(BaseModel):
     """
     email: str  # User email.
     password: str  # User password.
+
+
+class User(BaseModel):
+    """
+    User information.
+    """
+    id: Optional[str] = ""  # User ID.
+    email: Optional[str] = ""  # User email.
+    firstName: Optional[str] = ""  # User first name.
+    lastName: Optional[str] = ""  # User last name.
+
+
+class Organization(BaseModel):
+    """
+    Organization information.
+    """
+    id: Optional[str] = ""  # Organization ID.
+    role: Optional[str] = ""  # Organization role.
+
+
+class ProfileResponse(BaseModel):
+    """
+    Response object for user profile.
+    """
+    user: User  # User information.
+    organization: Organization  # Organization information.
+
+
+class CreateAPIKeyRequest(BaseModel):
+    """
+    Request object for creating an API key.
+    """
+    name: str  # Name of the API key.
+    type: Optional[str] = ""  # Type of the API key.
+    expiresAt: Optional[int] = 0  # Expiration timestamp for the API key.
+
+
+class CreateAPIKeyResponse(BaseModel):
+    """
+    Response object for creating an API key.
+    """
+    key: str  # The created API key.
+
+
+class APIKey(BaseModel):
+    """
+    API key information.
+    """
+    id: Optional[str] = ""  # API key ID.
+    name: Optional[str] = ""  # API key name.
+    type: Optional[str] = ""  # API key type.
+    partialKey: Optional[str] = ""  # Partial key for the API key.
+    expiresAt: Optional[int] = 0  # Expiration timestamp for the API key.
+    createdAt: Optional[int] = 0  # Creation timestamp for the API key.
+    owner: Optional[User] = None  # Owner of the API key.
+
+
+class GetAPIKeysResponse(BaseModel):
+    """
+    Response object for getting a list of API keys.
+    """
+    keys: list[APIKey]  # List of API keys.
+
+
+class GetSelfAPIKeyResponse(BaseModel):
+    """
+    Response object for getting the API key of the current user.
+    """
+    key: APIKey  # The API key of the current user.
+    organization: Optional[Organization] = None  # Organization information.

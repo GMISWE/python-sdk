@@ -1,8 +1,13 @@
+import logging
+from requests.exceptions import RequestException
+
 from ._http_client import HTTPClient
 from ._decorator import handle_refresh_token
 from ._iam_client import IAMClient
 from .._config import TASK_SERVICE_BASE_URL
 from .._models import *
+
+logger = logging.getLogger(__name__)
 
 
 class TaskClient:
@@ -21,17 +26,19 @@ class TaskClient:
         self.iam_client = iam_client
 
     @handle_refresh_token
-    def get_task(self, task_id: str) -> Task:
+    def get_task(self, task_id: str) -> Optional[Task]:
         """
         Retrieves a task from the task service using the given task ID.
 
         :param task_id: The ID of the task to be retrieved.
-        :return: An instance of Task containing the details of the retrieved task.
-        :rtype: Task
+        :return: An instance of Task containing the details of the retrieved task, or None if an error occurs.
         """
-        result = self.client.get("/get_task", self.iam_client.get_custom_headers(), {"task_id": task_id})
-
-        return Task.model_validate(result)
+        try:
+            response = self.client.get("/get_task", self.iam_client.get_custom_headers(), {"task_id": task_id})
+            return Task.model_validate(response) if response else None
+        except (RequestException, ValueError) as e:
+            logger.error(f"Failed to retrieve task {task_id}: {e}")
+            return None
 
     @handle_refresh_token
     def get_all_tasks(self) -> GetAllTasksResponse:
@@ -39,70 +46,108 @@ class TaskClient:
         Retrieves all tasks from the task service.
 
         :return: An instance of GetAllTasksResponse containing the retrieved tasks.
-        :rtype: GetAllTasksResponse
         """
-        result = self.client.get("/get_tasks", self.iam_client.get_custom_headers())
-        if not result:
+        try:
+            response = self.client.get("/get_tasks", self.iam_client.get_custom_headers())
+            if not response:
+                logger.error("Empty response from /get_tasks")
+                return GetAllTasksResponse(tasks=[])
+            return GetAllTasksResponse.model_validate(response)
+        except (RequestException, ValueError) as e:
+            logger.error(f"Failed to retrieve all tasks: {e}")
             return GetAllTasksResponse(tasks=[])
 
-        return GetAllTasksResponse.model_validate(result)
-
     @handle_refresh_token
-    def create_task(self, task: Task) -> CreateTaskResponse:
+    def create_task(self, task: Task) -> Optional[CreateTaskResponse]:
         """
         Creates a new task using the provided task object.
 
         :param task: The Task object containing the details of the task to be created.
+        :return: The response object containing created task details, or None if an error occurs.
         """
-        result = self.client.post("/create_task", self.iam_client.get_custom_headers(), task.model_dump())
-
-        return CreateTaskResponse.model_validate(result)
+        try:
+            response = self.client.post("/create_task", self.iam_client.get_custom_headers(), task.model_dump())
+            return CreateTaskResponse.model_validate(response) if response else None
+        except (RequestException, ValueError) as e:
+            logger.error(f"Failed to create task: {e}")
+            return None
 
     @handle_refresh_token
-    def update_task_schedule(self, task: Task):
+    def update_task_schedule(self, task: Task) -> bool:
         """
         Updates the schedule of an existing task.
 
         :param task: The Task object containing the updated task details.
+        :return: True if update is successful, False otherwise.
         """
-        self.client.put("/update_schedule", self.iam_client.get_custom_headers(), task.model_dump())
+        try:
+            response = self.client.put("/update_schedule", self.iam_client.get_custom_headers(), task.model_dump())
+            return response is not None
+        except RequestException as e:
+            logger.error(f"Failed to update schedule for task {task.task_id}: {e}")
+            return False
 
     @handle_refresh_token
-    def start_task(self, task_id: str):
+    def start_task(self, task_id: str) -> bool:
         """
         Starts a task using the given task ID.
 
         :param task_id: The ID of the task to be started.
+        :return: True if start is successful, False otherwise.
         """
-        self.client.post("/start_task", self.iam_client.get_custom_headers(), {"task_id": task_id})
+        try:
+            response = self.client.post("/start_task", self.iam_client.get_custom_headers(), {"task_id": task_id})
+            return response is not None
+        except RequestException as e:
+            logger.error(f"Failed to start task {task_id}: {e}")
+            return False
 
     @handle_refresh_token
-    def stop_task(self, task_id: str):
+    def stop_task(self, task_id: str) -> bool:
         """
         Stops a running task using the given task ID.
 
         :param task_id: The ID of the task to be stopped.
+        :return: True if stop is successful, False otherwise.
         """
-        self.client.post("/stop_task", self.iam_client.get_custom_headers(), {"task_id": task_id})
+        try:
+            response = self.client.post("/stop_task", self.iam_client.get_custom_headers(), {"task_id": task_id})
+            return response is not None
+        except RequestException as e:
+            logger.error(f"Failed to stop task {task_id}: {e}")
+            return False
 
     @handle_refresh_token
-    def get_usage_data(self, start_timestamp: str, end_timestamp: str) -> GetUsageDataResponse:
+    def get_usage_data(self, start_timestamp: str, end_timestamp: str) -> Optional[GetUsageDataResponse]:
         """
         Retrieves the usage data of a task using the given task ID.
 
         :param start_timestamp: The start timestamp of the usage data.
         :param end_timestamp: The end timestamp of the usage data.
+        :return: An instance of GetUsageDataResponse, or None if an error occurs.
         """
-        result = self.client.get("/get_usage_data", self.iam_client.get_custom_headers(),
-                                 {"start_timestamp": start_timestamp, "end_timestamp": end_timestamp})
-
-        return result
+        try:
+            response = self.client.get(
+                "/get_usage_data",
+                self.iam_client.get_custom_headers(),
+                {"start_timestamp": start_timestamp, "end_timestamp": end_timestamp}
+            )
+            return GetUsageDataResponse.model_validate(response) if response else None
+        except (RequestException, ValueError) as e:
+            logger.error(f"Failed to retrieve usage data from {start_timestamp} to {end_timestamp}: {e}")
+            return None
 
     @handle_refresh_token
-    def archive_task(self, task_id: str):
+    def archive_task(self, task_id: str) -> bool:
         """
         Archives a task using the given task ID.
 
         :param task_id: The ID of the task to be archived.
+        :return: True if archiving is successful, False otherwise.
         """
-        self.client.post("/archive_task", self.iam_client.get_custom_headers(), {"task_id": task_id})
+        try:
+            response = self.client.post("/archive_task", self.iam_client.get_custom_headers(), {"task_id": task_id})
+            return response is not None
+        except RequestException as e:
+            logger.error(f"Failed to archive task {task_id}: {e}")
+            return False

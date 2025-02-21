@@ -55,6 +55,7 @@ class HTTPClient:
         response = None
         try:
             response = requests.request(method, url, params=params, json=data, headers=headers)
+            logger.debug(response.text)
             if response.status_code == 401:
                 raise UnauthorizedError("Access token expired or invalid.")
             elif response.status_code != 200 and response.status_code != 201:
@@ -65,7 +66,6 @@ class HTTPClient:
                 raise APIError(f"HTTP Request failed: {error_message}")
             # Raise for HTTP errors
             response.raise_for_status()
-            logger.debug(response.text)
 
         except requests.exceptions.RequestException as e:
             raise APIError(f"HTTP Request failed: {str(e)}")
