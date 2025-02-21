@@ -7,6 +7,7 @@ from typing import Optional
 from ._internal._client._iam_client import IAMClient
 from ._internal._manager._artifact_manager import ArtifactManager
 from ._internal._manager._task_manager import TaskManager
+from ._internal._manager._iam_manager import IAMManager
 from ._internal._enums import BuildStatus
 from ._internal._models import Task, TaskConfig, RayTaskConfig, TaskScheduling, ReplicaResource
 
@@ -35,6 +36,7 @@ class Client:
         # Managers are lazily initialized through private attributes
         self._artifact_manager = None
         self._task_manager = None
+        self._iam_manager = None
 
     def create_task_from_artifact_template(self, artifact_template_id: str, task_scheduling: TaskScheduling) -> Task:
         """
@@ -127,3 +129,13 @@ class Client:
         if self._task_manager is None:
             self._task_manager = TaskManager(self.iam_client)
         return self._task_manager
+
+    @property
+    def iam_manager(self):
+        """
+        Lazy initialization for IAMManager.
+        Ensures the Client instance controls its lifecycle.
+        """
+        if self._iam_manager is None:
+            self._iam_manager = IAMManager(self.iam_client)
+        return self._iam_manager
