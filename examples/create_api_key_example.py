@@ -12,9 +12,9 @@ iam_manager = cli.iam_manager
 
 api_key = os.getenv("GMI_CLOUD_API_KEY")
 if not api_key:
-    api_key = iam_manager.create_orig_api_key("example_api_key")
+    api_key = iam_manager.create_org_api_key("example_api_key")
 print(api_key)
 
-keys = iam_manager.get_orig_api_keys()
+keys = iam_manager.get_org_api_keys()
 for key in keys:
     print(key)

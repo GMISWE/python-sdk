@@ -186,7 +186,7 @@ class ArtifactClient:
             return None
 
     @handle_refresh_token
-    def get_artifact_templates(self) -> List[ArtifactTemplate]:
+    def get_public_templates(self) -> List[ArtifactTemplate]:
         """
         Fetches all artifact templates.
 
@@ -194,19 +194,19 @@ class ArtifactClient:
         :rtype: List[ArtifactTemplate]
         """
         try:
-            response = self.client.get("/get_artifact_templates", self.iam_client.get_custom_headers())
+            response = self.client.get("/get_public_templates", self.iam_client.get_custom_headers())
 
             if not response:
-                logger.error("Empty response received from /get_artifact_templates API")
+                logger.error("Empty response received from /get_public_templates API")
                 return []
 
             try:
-                result = GetArtifactTemplatesResponse.model_validate(response)
+                result = GetPublicTemplatesResponse.model_validate(response)
                 return result.artifact_templates
             except ValueError as ve:
                 logger.error(f"Failed to validate response data: {ve}")
                 return []
 
         except RequestException as e:
-            logger.error(f"Request to /get_artifact_templates failed: {e}")
+            logger.error(f"Request to /get_public_templates failed: {e}")
             return []

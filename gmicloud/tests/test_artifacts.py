@@ -251,24 +251,23 @@ class TestArtifactManager(unittest.TestCase):
             self.artifact_manager.delete_bigfile("nonexistent_id", "file.txt")
         self.assertTrue("Artifact not found" in str(context.exception))
 
-    @patch('gmicloud._internal._client._artifact_client.ArtifactClient.get_artifact_templates')
-    def test_get_artifact_templates_returns_templates(self, mock_get_artifact_templates):
-        mock_get_artifact_templates.return_value = GetArtifactTemplatesResponse(
-            artifact_templates=[ArtifactTemplate(artifact_template_id="1", artifact_name="Template1")])
-        templates = self.artifact_manager.get_artifact_templates()
+    @patch('gmicloud._internal._client._artifact_client.ArtifactClient.get_public_templates')
+    def test_get_artifact_templates_returns_templates(self, mock_get_public_templates):
+        mock_get_public_templates.return_value = [ArtifactTemplate(template_id="1", template_data=TemplateData(name="Template1"))]
+        templates = self.artifact_manager.get_public_templates()
         self.assertEqual(len(templates), 1)
-        self.assertEqual(templates[0].artifact_template_id, "1")
-        self.assertEqual(templates[0].artifact_name, "Template1")
+        self.assertEqual(templates[0].template_id, "1")
+        self.assertEqual(templates[0].template_data.name, "Template1")
 
-    @patch('gmicloud._internal._client._artifact_client.ArtifactClient.get_artifact_templates')
-    def test_get_artifact_templates_returns_empty_list_when_no_templates(self, mock_get_artifact_templates):
-        mock_get_artifact_templates.return_value = GetArtifactTemplatesResponse(artifact_templates=[])
-        templates = self.artifact_manager.get_artifact_templates()
+    @patch('gmicloud._internal._client._artifact_client.ArtifactClient.get_public_templates')
+    def test_get_artifact_templates_returns_empty_list_when_no_templates(self, mock_get_public_templates):
+        mock_get_public_templates.return_value = []
+        templates = self.artifact_manager.get_public_templates()
         self.assertEqual(len(templates), 0)
 
-    @patch('gmicloud._internal._client._artifact_client.ArtifactClient.get_artifact_templates')
-    def test_get_artifact_templates_raises_error_on_failure(self, mock_get_artifact_templates):
-        mock_get_artifact_templates.side_effect = Exception("Failed to fetch templates")
+    @patch('gmicloud._internal._client._artifact_client.ArtifactClient.get_public_templates')
+    def test_get_artifact_templates_raises_error_on_failure(self, mock_get_public_templates):
+        mock_get_public_templates.side_effect = Exception("Failed to fetch templates")
         with self.assertRaises(Exception) as context:
-            self.artifact_manager.get_artifact_templates()
+            self.artifact_manager.get_public_templates()
         self.assertTrue("Failed to fetch templates" in str(context.exception))

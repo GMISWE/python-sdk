@@ -17,14 +17,14 @@ def create_artifact_from_template(client: Client, template_id: str) -> str:
     artifact_manager = client.artifact_manager
 
     # Get all artifact templates
-    templates = artifact_manager.get_artifact_templates()
+    templates = artifact_manager.get_public_templates()
 
     # Search for matching template
     for template in templates:
-        if template.artifact_template_id == template_id:
+        if template.template_id == template_id:
             # Create and return artifact
             return artifact_manager.create_artifact_from_template(
-                artifact_template_id=template.artifact_template_id
+                artifact_template_id=template.template_id
             )
 
     return ""  # Explicit empty string return for consistency

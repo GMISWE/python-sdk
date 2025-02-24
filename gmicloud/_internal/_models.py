@@ -131,7 +131,7 @@ class DeleteBigfileResponse(BaseModel):
     status: Optional[str] = ""  # Status of the deletion process.
 
 
-class GetArtifactTemplatesResponse(BaseModel):
+class GetPublicTemplatesResponse(BaseModel):
     """
     Response containing a list of artifact templates.
     """
@@ -142,18 +142,39 @@ class ArtifactTemplate(BaseModel):
     """
     Template for creating an artifact.
     """
-    artifact_template_id: str  # Unique identifier for the artifact template.
-    artifact_description: Optional[str] = ""  # Description of the artifact template.
-    artifact_name: Optional[str] = ""  # Name of the artifact template.
-    artifact_tags: Optional[List[str]] = None  # Tags associated with the artifact template.
-    ray: Optional["RayTemplate"] = None  # Template for Ray-based artifacts.
+    template_id: str  # Unique identifier for the artifact template.
+    template_data: Optional["TemplateData"] = None  # Data for the artifact template.
+    template_metadata: Optional["TemplateMetadata"] = None  # Metadata for the artifact template.
+
+
+class TemplateMetadata(BaseModel):
+    """
+    Metadata for an artifact template.
+    """
+    create_at: Optional[str] = None  # Timestamp when the template was created.
+    create_by: Optional[str] = ""  # ID of the user who created the template.
+    create_by_org_id: Optional[str] = ""  # ID of the organization to which the user belongs.
+    is_public: Optional[bool] = False  # Indicates if the template is public.
+    update_at: Optional[str] = None  # Timestamp when the template was last updated.
+    update_by: Optional[str] = ""  # ID of the user who last updated the template.
+
+class TemplateData(BaseModel):
+    """
+    Data for an artifact template.
+    """
+    description: Optional[str] = ""  # Description of the artifact template.
+    icon_link: Optional[str] = ""  # Link to the icon for the artifact template.
+    image_link: Optional[str] = ""  # Link to the image for the artifact template.
+    name: Optional[str] = ""  # Name of the artifact template.
+    ray: Optional["RayContent"] = None  # Template for Ray-based artifacts.
     resources: Optional["ResourcesTemplate"] = None  # Resource allocation template.
+    tags: Optional[List[str]] = None  # Tags associated with the artifact template.
+    volume_path: Optional[str] = ""  # Path to the volume where the artifact is stored.
 
 
-class RayTemplate(BaseModel):
+class RayContent(BaseModel):
     deployment_name: Optional[str] = ""  # Name of the deployment.
     file_path: Optional[str] = ""  # Path to the task file in storage.
-    version: Optional[str] = ""  # Version of Ray used.
 
 
 class ResourcesTemplate(BaseModel):

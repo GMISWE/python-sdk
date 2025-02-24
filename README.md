@@ -97,11 +97,12 @@ First, you’ll retrieve all templates and create an artifact based on the desir
 ```python
 from gmicloud import *
 
+
 def create_artifact_from_template(client: Client) -> str:
     artifact_manager = client.artifact_manager
 
     # Get all artifact templates
-    templates = artifact_manager.get_artifact_templates()
+    templates = artifact_manager.get_public_templates()
     for template in templates:
         if template.artifact_template_id == "qwen_2.5_14b_instruct_template_001":
             # Create an artifact from a template

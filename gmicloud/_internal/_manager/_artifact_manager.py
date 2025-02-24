@@ -241,14 +241,14 @@ class ArtifactManager:
 
         return artifact_id
 
-    def get_artifact_templates(self) -> List[ArtifactTemplate]:
+    def get_public_templates(self) -> List[ArtifactTemplate]:
         """
         Fetch all artifact templates.
 
         :return: A list of ArtifactTemplate objects.
         :rtype: List[ArtifactTemplate]
         """
-        return self.artifact_client.get_artifact_templates()
+        return self.artifact_client.get_public_templates()
 
     @staticmethod
     def _validate_file_name(file_name: str) -> None:

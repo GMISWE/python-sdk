@@ -55,16 +55,18 @@ class Client:
         artifact_manager = self.artifact_manager
         task_manager = self.task_manager
 
-        templates = artifact_manager.get_artifact_templates()
+        templates = artifact_manager.get_public_templates()
         template = None
         for v in templates:
-            if v.artifact_template_id == artifact_template_id:
+            if v.template_id == artifact_template_id:
                 template = v
         if not template:
             raise ValueError(f"Template with ID {artifact_template_id} not found.")
-        if not template.ray:
+        if not template.template_data:
+            raise ValueError("Template does not contain template data.")
+        if not template.template_data.ray:
             raise ValueError("Template does not contain Ray configuration.")
-        if not template.resources:
+        if not template.template_data.resources:
             raise ValueError("Template does not contain resource configuration.")
 
         artifact_id = artifact_manager.create_artifact_from_template(artifact_template_id)

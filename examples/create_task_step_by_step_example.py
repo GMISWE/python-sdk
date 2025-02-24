@@ -17,12 +17,12 @@ def create_artifact_from_template(client: Client) -> str:
     artifact_manager = client.artifact_manager
 
     # Get all artifact templates
-    templates = artifact_manager.get_artifact_templates()
+    templates = artifact_manager.get_public_templates()
     for template in templates:
-        if template.artifact_template_id == "qwen_2.5_14b_instruct_template_001":
+        if template.template_id == "qwen_2.5_14b_instruct_template_001":
             # Create an artifact from a template
             artifact_id = artifact_manager.create_artifact_from_template(
-                artifact_template_id=template.artifact_template_id,
+                artifact_template_id=template.template_id,
             )
 
             return artifact_id

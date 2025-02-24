@@ -11,7 +11,7 @@ from examples.completion import call_chat_completion
 cli = Client()
 
 # Create and start a task from an artifact template
-task = cli.create_task_from_artifact_template("qwen_2.5_14b_instruct_template_001", TaskScheduling(
+task = cli.create_task_from_artifact_template("b6a6429f-9e18-4f76-a258-a3ba3e78ed67", TaskScheduling(
     scheduling_oneoff=OneOffScheduling(
         trigger_timestamp=int(datetime.now().timestamp()) + 10,
         min_replicas=1,

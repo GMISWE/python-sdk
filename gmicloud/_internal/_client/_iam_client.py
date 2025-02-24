@@ -111,7 +111,7 @@ class IAMClient:
             logger.error(f"Token refresh failed: {e}")
             return False
 
-    def create_orig_api_key(self, request: CreateAPIKeyRequest) -> Optional[str]:
+    def create_org_api_key(self, request: CreateAPIKeyRequest) -> Optional[str]:
         """
         Creates a new API key for the current user.
         """
@@ -124,7 +124,7 @@ class IAMClient:
             logger.error(f"Failed to create API key: {e}")
             return None
 
-    def get_orig_api_keys(self) -> Optional[GetAPIKeysResponse]:
+    def get_org_api_keys(self) -> Optional[GetAPIKeysResponse]:
         """
         Fetches all API keys for the current user.
         """
