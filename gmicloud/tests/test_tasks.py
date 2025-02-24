@@ -72,7 +72,7 @@ class TestTaskManager(unittest.TestCase):
                 'create_timestamp': 1734951094,
                 'last_update_timestamp': 1734975798
             },
-            'task_status': '',
+            'task_status': 'running',
             'readiness_status': '',
             'info': {
                 'endpoint_status': 'ready',

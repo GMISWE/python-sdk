@@ -14,7 +14,7 @@ class IAMManager:
         """
         self.iam_client = iam_client
 
-    def create_orig_api_key(self, name: str, expires_at: Optional[int] = None) -> str:
+    def create_org_api_key(self, name: str, expires_at: Optional[int] = None) -> str:
         """
         Creates a new API key for the current user.
         """
@@ -26,11 +26,11 @@ class IAMManager:
             expires_at = int(datetime.now().timestamp()) + 30 * 24 * 60 * 60
             print(expires_at)
 
-        return self.iam_client.create_orig_api_key(
+        return self.iam_client.create_org_api_key(
             CreateAPIKeyRequest(name=name, type="ie_model", expiresAt=expires_at))
 
-    def get_orig_api_keys(self) -> List[APIKey]:
+    def get_org_api_keys(self) -> List[APIKey]:
         """
         Fetches all API keys for the current user.
         """
-        return self.iam_client.get_orig_api_keys().keys
+        return self.iam_client.get_org_api_keys().keys

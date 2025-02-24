@@ -41,7 +41,7 @@ def call_chat_completion(client: Client, task_id: str) -> str:
     iam_manager = client.iam_manager
     api_key = os.getenv("GMI_CLOUD_API_KEY")
     if not api_key:
-        api_key = iam_manager.create_orig_api_key("example_api_key")
+        api_key = iam_manager.create_org_api_key("example_api_key")
     open_ai = OpenAI(
         base_url=os.getenv("OPENAI_API_BASE", f"http://{endpoint_url}/serve/v1/"),
         api_key=api_key
