@@ -31,3 +31,8 @@ class TaskStatus(str, Enum):
     RUNNING = "running"
     NEEDSTOP = "needstop"
     ARCHIVED = "archived"
+
+class ModelParameterType(str, Enum):
+    NUMERIC = "numeric"
+    TEXT = "text"
+    BOOLEAN = "boolean"

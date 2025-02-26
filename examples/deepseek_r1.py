@@ -50,7 +50,6 @@ def create_task_and_start(client: Client, artifact_id: str) -> str:
         task = task_manager.create_task(Task(
             config=TaskConfig(
                 ray_task_config=RayTaskConfig(
-                    ray_version="2.40.0-py310-gpu",
                     file_path="serve",
                     artifact_id=artifact_id,
                     deployment_name="app",

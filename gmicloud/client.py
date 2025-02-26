@@ -89,14 +89,13 @@ class Client:
             task = task_manager.create_task(Task(
                 config=TaskConfig(
                     ray_task_config=RayTaskConfig(
-                        ray_version=template.ray.version,
-                        file_path=template.ray.file_path,
+                        file_path=template.template_data.ray.file_path,
                         artifact_id=artifact_id,
-                        deployment_name=template.ray.deployment_name,
+                        deployment_name=template.template_data.ray.deployment_name,
                         replica_resource=ReplicaResource(
-                            cpu=template.resources.cpu,
-                            ram_gb=template.resources.memory,
-                            gpu=template.resources.gpu,
+                            cpu=template.template_data.resources.cpu,
+                            ram_gb=template.template_data.resources.memory,
+                            gpu=template.template_data.resources.gpu,
                         ),
                     ),
                     task_scheduling=task_scheduling,

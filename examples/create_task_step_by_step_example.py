@@ -19,7 +19,7 @@ def create_artifact_from_template(client: Client) -> str:
     # Get all artifact templates
     templates = artifact_manager.get_public_templates()
     for template in templates:
-        if template.template_id == "qwen_2.5_14b_instruct_template_001":
+        if template.template_id == "b6a6429f-9e18-4f76-a258-a3ba3e78ed67":
             # Create an artifact from a template
             artifact_id = artifact_manager.create_artifact_from_template(
                 artifact_template_id=template.template_id,
@@ -50,7 +50,6 @@ def create_task_and_start(client: Client, artifact_id: str) -> str:
         task = task_manager.create_task(Task(
             config=TaskConfig(
                 ray_task_config=RayTaskConfig(
-                    ray_version="2.40.0-py310-gpu",
                     file_path="serve",
                     artifact_id=artifact_id,
                     deployment_name="app",
