@@ -1,8 +1,8 @@
-from typing import Optional, List
+from typing import Optional, List, Union
 from datetime import datetime
 
 from pydantic import BaseModel
-from gmicloud._internal._enums import BuildStatus, TaskStatus, TaskEndpointStatus
+from gmicloud._internal._enums import BuildStatus, TaskStatus, TaskEndpointStatus, ModelParameterType
 
 
 class BigFileMetadata(BaseModel):
@@ -70,6 +70,7 @@ class CreateArtifactRequest(BaseModel):
     artifact_name: str  # The name of the artifact to create.
     artifact_description: Optional[str] = ""  # Description of the artifact.
     artifact_tags: Optional[List[str]] = None  # Tags for the artifact, separated by commas.
+    model_parameters: Optional[List["ModelParameter"]] = None  # Parameters for the artifact.
 
 
 class CreateArtifactResponse(BaseModel):
@@ -158,6 +159,7 @@ class TemplateMetadata(BaseModel):
     update_at: Optional[str] = None  # Timestamp when the template was last updated.
     update_by: Optional[str] = ""  # ID of the user who last updated the template.
 
+
 class TemplateData(BaseModel):
     """
     Data for an artifact template.
@@ -165,12 +167,26 @@ class TemplateData(BaseModel):
     description: Optional[str] = ""  # Description of the artifact template.
     icon_link: Optional[str] = ""  # Link to the icon for the artifact template.
     image_link: Optional[str] = ""  # Link to the image for the artifact template.
+    model_parameters: Optional[List["ModelParameter"]] = None  # Parameters for the artifact template.
     name: Optional[str] = ""  # Name of the artifact template.
     ray: Optional["RayContent"] = None  # Template for Ray-based artifacts.
     resources: Optional["ResourcesTemplate"] = None  # Resource allocation template.
     tags: Optional[List[str]] = None  # Tags associated with the artifact template.
     volume_path: Optional[str] = ""  # Path to the volume where the artifact is stored.
 
+
+class ModelParameter(BaseModel):
+    """
+    Parameter for an artifact template.
+    """
+    category: Optional[str] = ""  # Category of the parameter.
+    display_name: Optional[str] = ""  # Display name of the parameter.
+    key: Optional[str] = ""  # Key for the parameter.
+    max: Optional[float] = 0  # Maximum value for the parameter.
+    min: Optional[float] = 0  # Minimum value for the parameter.
+    step: Optional[float] = 0  # Step value for the parameter.
+    type: Optional[ModelParameterType] = ModelParameterType.TEXT  # Type of the parameter (e.g., numeric, bool, text).
+    value: Optional[Union[int, float, bool, str]] = ""  # Default value for the parameter.
 
 class RayContent(BaseModel):
     deployment_name: Optional[str] = ""  # Name of the deployment.
@@ -234,7 +250,6 @@ class RayTaskConfig(BaseModel):
     Configuration settings for Ray tasks.
     """
     artifact_id: Optional[str] = ""  # Associated artifact ID.
-    ray_version: Optional[str] = ""  # Version of Ray used.
     ray_cluster_image: Optional[str] = ""  # Docker image for the Ray cluster.
     file_path: Optional[str] = ""  # Path to the task file in storage.
     deployment_name: Optional[str] = ""  # Name of the deployment.
