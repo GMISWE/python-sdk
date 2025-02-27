@@ -12,49 +12,36 @@ logger = logging.getLogger(__name__)
 def call_chat_completion(client: Client, task_id: str) -> str:
     task_manager = client.task_manager
     endpoint_url = ""
-    # Wait for the task to be ready
-    while True:
-        try:
-            # Wait for 5 seconds
-            time.sleep(5)
-            task = task_manager.get_task(task_id)
-            logger.info(f"Successfully got task info, task status: {task.task_status}")
-            # Wait until the task is running
-            if task.task_status != "running":
-                continue
-            logger.info(f"Endpoint info status: {task.endpoint_info.endpoint_status}")
-            if task.endpoint_info.endpoint_status == TaskEndpointStatus.RUNNING:
-                endpoint_url = task.endpoint_info.endpoint_url
-                break
-            for endpoint in task.cluster_endpoints:
-                logger.info(f"Cluster endpoint info status: {endpoint.endpoint_status}")
-                if endpoint.endpoint_status == TaskEndpointStatus.RUNNING:
-                    endpoint_url = endpoint.endpoint_url
-                    break
-            if endpoint_url:
-                break
-        except Exception as e:
-            raise e
-
-    time.sleep(30)  # Wait for the endpoint to be truly ready
-
+    try:
+        task = task_manager.get_task(task_id)
+        logger.info(f"Successfully got task info, task status: {task.task_status}")
+        endpoint_url = task.endpoint_info.endpoint_url
+    except Exception as e:
+        raise e
+    if not endpoint_url:
+        raise Exception("Endpoint URL not found")
+    
     iam_manager = client.iam_manager
-    api_key = os.getenv("GMI_CLOUD_API_KEY")
-    if not api_key:
+    api_key = ""
+    keys = iam_manager.get_org_api_keys()
+    if len(keys) == 0:
+        logger.info("No API keys found. Creating a new one.")
         api_key = iam_manager.create_org_api_key("example_api_key")
+    else:
+        api_key = keys[0].partialKey
+
     open_ai = OpenAI(
-        base_url=os.getenv("OPENAI_API_BASE", f"http://{endpoint_url}/serve/v1/"),
+        base_url=os.getenv("OPENAI_API_BASE", f"http://{endpoint_url}/v1/"),
         api_key=api_key
     )
     # Make a chat completion request using the new OpenAI client.
     completion = open_ai.chat.completions.create(
-        model="Qwen/Qwen2.5-14B-Instruct",
+        model="default",
         messages=[
-            {"role": "system", "content": "You are an excellent writer."},
-            {"role": "user",
-             "content": "Write a movie script about a dystopian past where intelligent machines have evolved to fight against humanity. A younger human challenges the ways of the elders and transforms into a cyborg to fight the machines."},
+            {"role": "system", "content": "You are a helpful assistant."},
+            {"role": "user", "content": "Who are you?"},
         ],
-        max_tokens=2000,
+        max_tokens=500,
         temperature=0.7
     )
     logger.info("Successfully called chat completion")

@@ -297,6 +297,7 @@ class TaskConfig(BaseModel):
     """
     Configuration data for a task.
     """
+    task_name: Optional[str] = ""  # Name of the task.
     ray_task_config: Optional[RayTaskConfig] = None  # Configuration for a Ray-based task.
     task_scheduling: Optional[TaskScheduling] = None  # Scheduling configuration for the task.
     create_timestamp: Optional[int] = 0  # Timestamp when the task was created.
