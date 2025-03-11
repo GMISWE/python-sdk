@@ -132,17 +132,4 @@ password: Optional[str] = ""
 * get_task(task_id: str): Retrieve the status and details of a specific task.
 
 ## Notes & Troubleshooting
-
-* Ensure Credentials are Correct: Double-check your environment variables or parameters passed into the Client object.
-* Artifact Status: It may take a few minutes for an artifact or task to transition to the "running" state.
-* Inference Endpoint Readiness: Use the task endpoint only after the task status changes to "running".
-* Default OpenAI Key: By default, the OpenAI API base URL is derived from the endpoint provided by GMI.
-
-## Contributing
-
-We welcome contributions to enhance the SDK. Please follow these steps:
-
-1. Fork the repository.
-2. Create a new branch for your feature or bugfix.
-3. Commit changes with clear messages.
-4. Submit a pull request for review.
+k
