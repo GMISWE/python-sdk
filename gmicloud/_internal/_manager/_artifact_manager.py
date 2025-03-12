@@ -1,4 +1,5 @@
 import os
+import time
 from typing import List
 import mimetypes
 
@@ -7,6 +8,9 @@ from .._client._artifact_client import ArtifactClient
 from .._client._file_upload_client import FileUploadClient
 from .._models import *
 
+import logging
+
+logger = logging.getLogger(__name__)
 
 class ArtifactManager:
     """
@@ -86,6 +90,41 @@ class ArtifactManager:
             raise ValueError("Failed to create artifact from template.")
 
         return resp.artifact_id
+    
+    def create_artifact_from_template_name(self, artifact_template_name: str) -> tuple[str, ReplicaResource]:
+        """
+        Create an artifact from a template.
+        :param artifact_template_name: The name of the template to use.
+        :return: A tuple containing the artifact ID and the recommended replica resources.
+        :rtype: tuple[str, ReplicaResource]
+        """
+
+        recommended_replica_resources = None
+        template_id = None
+        try:
+            templates = self.get_public_templates()
+        except Exception as e:
+            logger.error(f"Failed to get artifact templates, Error: {e}")
+        for template in templates:
+            if template.template_data and template.template_data.name == artifact_template_name:
+                resources_template = template.template_data.resources
+                recommended_replica_resources = ReplicaResource(
+                    cpu=resources_template.cpu,
+                    ram_gb=resources_template.memory,
+                    gpu=resources_template.gpu,
+                    gpu_name=resources_template.gpu_name,
+                )
+                template_id = template.template_id
+                break
+        if not template_id:
+            raise ValueError(f"Template with name {artifact_template_name} not found.")
+        try: 
+            artifact_id = self.create_artifact_from_template(template_id)
+            self.wait_for_artifact_ready(artifact_id)
+            return artifact_id, recommended_replica_resources
+        except Exception as e:
+            logger.error(f"Failed to create artifact from template, Error: {e}")
+            raise e
 
     def rebuild_artifact(self, artifact_id: str) -> RebuildArtifactResponse:
         """
@@ -240,7 +279,31 @@ class ArtifactManager:
             FileUploadClient.upload_large_file(bigfile_upload_url_resp.upload_link, model_file_path)
 
         return artifact_id
+    
 
+    def wait_for_artifact_ready(self, artifact_id: str, timeout_s: int = 900) -> None:
+        """
+        Wait for an artifact to be ready.
+
+        :param artifact_id: The ID of the artifact to wait for.
+        :param timeout_s: The timeout in seconds.
+        :return: None
+        """
+        start_time = time.time()
+        while True:
+            try:
+                artifact = self.get_artifact(artifact_id)
+                if artifact.build_status == BuildStatus.SUCCESS:
+                    return
+                elif artifact.build_status in [BuildStatus.FAILED, BuildStatus.TIMEOUT, BuildStatus.CANCELLED]:
+                    raise Exception(f"Artifact build failed, status: {artifact.build_status}")
+            except Exception as e:
+                logger.error(f"Failed to get artifact, Error: {e}")
+            if time.time() - start_time > timeout_s:
+                raise Exception(f"Artifact build takes more than {timeout_s // 60} minutes. Testing aborted.")
+            time.sleep(10)
+
+    
     def get_public_templates(self) -> List[ArtifactTemplate]:
         """
         Fetch all artifact templates.
@@ -249,6 +312,26 @@ class ArtifactManager:
         :rtype: List[ArtifactTemplate]
         """
         return self.artifact_client.get_public_templates()
+        
+
+    def list_public_template_names(self) -> list[str]:
+        """
+        List all public templates.
+
+        :return: A list of template names.
+        :rtype: list[str]
+        """
+        template_names = []
+        try: 
+            templates = self.get_public_templates()
+            for template in templates:
+                if template.template_data and template.template_data.name:
+                    template_names.append(template.template_data.name)
+            return template_names
+        except Exception as e:
+            logger.error(f"Failed to get artifact templates, Error: {e}")
+            return []
+
 
     @staticmethod
     def _validate_file_name(file_name: str) -> None:

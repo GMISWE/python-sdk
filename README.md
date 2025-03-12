@@ -23,7 +23,10 @@ pip install gmicloud
 
 ## Setup
 
-You must configure authentication credentials for accessing the GMI Cloud API. There are two ways to configure the SDK:
+You must configure authentication credentials for accessing the GMI Cloud API. 
+To create account and get log in info please visit **GMI inference platform: https://inference-engine.gmicloud.ai/**.
+
+There are two ways to configure the SDK:
 
 ### Option 1: Using Environment Variables
 
@@ -33,7 +36,6 @@ Set the following environment variables:
 export GMI_CLOUD_CLIENT_ID=<YOUR_CLIENT_ID>
 export GMI_CLOUD_EMAIL=<YOUR_EMAIL>
 export GMI_CLOUD_PASSWORD=<YOUR_PASSWORD>
-export GMI_CLOUD_API_KEY=<YOUR_API_KEY>
 ```
 
 ### Option 2: Passing Credentials as Parameters
@@ -59,138 +61,50 @@ pip install -r requirements.txt
 python -m examples.create_task_from_artifact_template.py
 ```
 
-### 2. Create a Task from an Artifact Template
+### 2. Create an inference task from an artifact template
 
-This is the simplest example to deploy an existing artifact template:
+This is the simplest example to deploy an inference task using an existing artifact template:
+
+Up-to-date code in /examples/create_task_from_artifact_template.py
 
 ```python
 from datetime import datetime
-from gmicloud import Client, TaskScheduling, OneOffScheduling
-from examples.completion import call_chat_completion
+import os
+import sys
 
-# Initialize the client
-client = Client()
-
-# Schedule and start a task from an artifact template
-task = client.create_task_from_artifact_template(
-    "qwen_2.5_14b_instruct_template_001",
-    TaskScheduling(
-        scheduling_oneoff=OneOffScheduling(
-            trigger_timestamp=int(datetime.now().timestamp()) + 10,  # Delay by 10 seconds
-            min_replicas=1,
-            max_replicas=10,
-        )
-    )
-)
-
-# Make a chat completion request via the task endpoint
-response = call_chat_completion(client, task.task_id)
-print(response)
-```
-
-### 3. Step-by-Step Example: Create Artifact, Task, and Query the Endpoint
-
-#### (a) Create an Artifact from a Template
-
-First, you’ll retrieve all templates and create an artifact based on the desired template (e.g., "Llama3.1 8B"):
-
-```python
-from gmicloud import *
-
-
-def create_artifact_from_template(client: Client) -> str:
-    artifact_manager = client.artifact_manager
-
-    # Get all artifact templates
-    templates = artifact_manager.get_public_templates()
-    for template in templates:
-        if template.artifact_template_id == "qwen_2.5_14b_instruct_template_001":
-            # Create an artifact from a template
-            artifact_id = artifact_manager.create_artifact_from_template(
-                artifact_template_id=template.artifact_template_id,
-            )
-
-            return artifact_id
-
-    return ""
-```
-
-#### (b) Create a Task from the Artifact
-
-Wait until the artifact becomes "ready" and then deploy it using task scheduling:
-
-```python
-from gmicloud import *
-import time
-from datetime import datetime
-
-def create_task_and_start(client: Client, artifact_id: str) -> str:
-    artifact_manager = client.artifact_manager
-    # Wait for the artifact to be ready
-    while True:
-        try:
-            artifact = artifact_manager.get_artifact(artifact_id)
-            print(f"Artifact status: {artifact.build_status}")
-            # Wait until the artifact is ready
-            if artifact.build_status == BuildStatus.SUCCESS:
-                break
-        except Exception as e:
-            raise e
-        # Wait for 2 seconds
-        time.sleep(2)
-    try:
-        task_manager = client.task_manager
-        # Create a task
-        task = task_manager.create_task(Task(
-            config=TaskConfig(
-                ray_task_config=RayTaskConfig(
-                    ray_version="2.40.0-py310-gpu",
-                    file_path="serve",
-                    artifact_id=artifact_id,
-                    deployment_name="app",
-                    replica_resource=ReplicaResource(
-                        cpu=10,
-                        ram_gb=100,
-                        gpu=1,
-                    ),
-                ),
-                task_scheduling=TaskScheduling(
-                    scheduling_oneoff=OneOffScheduling(
-                        trigger_timestamp=int(datetime.now().timestamp()) + 10,
-                        min_replicas=1,
-                        max_replicas=10,
-                    )
-                ),
-            ),
-        ))
-
-        # Start the task
-        task_manager.start_task(task.task_id)
-    except Exception as e:
-        raise e
-
-    return task.task_id
-```
-
-### (c) Query the Model Endpoint
-
-Once the task is running, use the endpoint for inference:
-
-```python
 from gmicloud import *
 from examples.completion import call_chat_completion
 
-# Initialize the Client
 cli = Client()
 
-# Create an artifact from a template
-artifact_id = create_artifact_from_template(cli)
+# List templates offered by GMI cloud 
+templates = cli.list_templates()
+print(f"Found {len(templates)} templates: {templates}")
 
-# Create a task and start it
-task_id = create_task_and_start(cli, artifact_id)
+# Pick a template from the list
+pick_template = "Llama-3.1-8B"
 
-# Call chat completion
-print(call_chat_completion(cli, task_id))
+# Create Artifact from template
+artifact_id, recommended_replica_resources = cli.create_artifact_from_template(templates[0])
+print(f"Created artifact {artifact_id} with recommended replica resources: {recommended_replica_resources}")
+
+# Create Task based on Artifact
+task_id = cli.create_task(artifact_id, recommended_replica_resources, TaskScheduling(
+    scheduling_oneoff=OneOffScheduling(
+        trigger_timestamp=int(datetime.now().timestamp()),
+        min_replicas=1,
+        max_replicas=1,
+    )
+))
+task = cli.task_manager.get_task(task_id)
+print(f"Task created: {task.config.task_name}. You can check details at https://inference-engine.gmicloud.ai/user-console/task")
+
+# Start Task and wait for it to be ready
+cli.start_task_and_wait(task.task_id)
+
+# Testing with calling chat completion
+print(call_chat_completion(cli, task.task_id))
+
 ```
 
 ## API Reference
@@ -218,17 +132,4 @@ password: Optional[str] = ""
 * get_task(task_id: str): Retrieve the status and details of a specific task.
 
 ## Notes & Troubleshooting
-
-* Ensure Credentials are Correct: Double-check your environment variables or parameters passed into the Client object.
-* Artifact Status: It may take a few minutes for an artifact or task to transition to the "running" state.
-* Inference Endpoint Readiness: Use the task endpoint only after the task status changes to "running".
-* Default OpenAI Key: By default, the OpenAI API base URL is derived from the endpoint provided by GMI.
-
-## Contributing
-
-We welcome contributions to enhance the SDK. Please follow these steps:
-
-1. Fork the repository.
-2. Create a new branch for your feature or bugfix.
-3. Commit changes with clear messages.
-4. Submit a pull request for review.
+k
