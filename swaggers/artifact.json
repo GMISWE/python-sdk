@@ -1,0 +1,1220 @@
+{
+    "schemes": [],
+    "swagger": "2.0",
+    "info": {
+        "description": "API for managing artifacts",
+        "title": "Artifact Server",
+        "contact": {},
+        "version": "1.0"
+    },
+    "host": "",
+    "basePath": "/api/v1/ie/artifact",
+    "paths": {
+        "/create_artifact": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Creates a new artifact with an initial status of \"INIT\". Generates a signed URL for uploading the artifact to GCS. Updates the artifact with the generated signed URL. Returns the artifact ID and the signed URL.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "artifacts"
+                ],
+                "summary": "Create a new artifact",
+                "parameters": [
+                    {
+                        "description": "Create Artifact Request",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/artifact.CreateArtifactRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "$ref": "#/definitions/artifact.CreateArtifactResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/common.APIErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/common.APIErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/create_artifact_from_template": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Creates an artifact from a template by its ID. Returns the artifact ID.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "artifacts"
+                ],
+                "summary": "Create an artifact from a template",
+                "parameters": [
+                    {
+                        "description": "Create Artifact From Template Request",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/artifact.CreateArtifactFromTemplateRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/artifact.CreateArtifactFromTemplateResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/common.APIErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/common.APIErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/delete_artifact": {
+            "delete": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Verifies if the artifact exists in the database. Archives the artifact by deleting files from GCS and updating the artifact status. Returns the artifact ID.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "artifacts"
+                ],
+                "summary": "Archive an artifact",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Artifact ID",
+                        "name": "artifact_id",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/artifact.DeleteArtifactResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/common.APIErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Artifact not found",
+                        "schema": {
+                            "$ref": "#/definitions/common.APIErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/common.APIErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/delete_bigfile": {
+            "delete": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Deletes a big file from an artifact by its ID and file name. Returns the artifact ID and the file name.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "artifacts"
+                ],
+                "summary": "Delete a big file from an artifact",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Artifact ID",
+                        "name": "artifact_id",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "File Name",
+                        "name": "file_name",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/artifact.DeleteBigFileResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/common.APIErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/common.APIErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/get_all_artifacts": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Retrieves all artifacts matching the optional user ID filter. Returns complete artifact records including metadata, build status (`INIT`, `CREATED`, `BUILDING`, `SUCCESS`, `FAILURE`, `TIMEOUT`, `CANCELLED`, `WORKING`, `QUEUED`), and associated big file information. If no user ID is provided, returns all artifacts in the system.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "artifacts"
+                ],
+                "summary": "Get all artifacts for a user or system-wide",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/artifact.GetAllArtifactsWithEndpointsResponse"
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/common.APIErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/common.APIErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/get_artifact": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Retrieves the complete artifact record from the database, including metadata, build status (`INIT`, `CREATED`, `BUILDING`, `SUCCESS`, `FAILURE`, `TIMEOUT`, `CANCELLED`, `WORKING`, `QUEUED`), and associated big file information.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "artifacts"
+                ],
+                "summary": "Get an artifact by ID",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Artifact ID",
+                        "name": "artifact_id",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/artifact.GetArtifactResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/common.APIErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/common.APIErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/get_bigfile_upload_url": {
+            "post": {
+                "description": "Returns the resumable upload link for a big file, UI side should handle the upload in chunks and keep the upload link to ensure the upload is resumable. If the link is expired, the client should request a new link from this endpoint.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "artifacts"
+                ],
+                "summary": "Generate a resumable upload link for a big file",
+                "parameters": [
+                    {
+                        "description": "Resumable Upload Link Request",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/artifact.ResumableUploadLinkRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "$ref": "#/definitions/artifact.ResumableUploadLinkResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/common.APIErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/common.APIErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/get_public_artifact": {
+            "get": {
+                "description": "Retrieves the public artifact with public task's endpoints.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "artifacts"
+                ],
+                "summary": "Get single public artifact by its ID",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Artifact ID",
+                        "name": "artifact_id",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/artifact.GetPublicArtifactsResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/common.APIErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/common.APIErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/get_public_artifacts": {
+            "get": {
+                "description": "Retrieves all public artifacts with public task's endpoints.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "artifacts"
+                ],
+                "summary": "Get all public artifacts",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/artifact.GetPublicArtifactsResponse"
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/common.APIErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/common.APIErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/get_public_templates": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Retrieves the public templates from the database.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "artifacts"
+                ],
+                "summary": "Get public templates",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/artifact.GetTemplatesResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/common.APIErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/common.APIErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/rebuild_artifact": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Triggers a new cloud build using existing files in GCS for the specified artifact",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "artifacts"
+                ],
+                "summary": "Rebuild an artifact",
+                "parameters": [
+                    {
+                        "description": "Rebuild Artifact Request",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/artifact.RebuildArtifactRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/artifact.RebuildArtifactResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/common.APIErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/common.APIErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/update_artifact": {
+            "put": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Updates an artifact by its ID. Returns the updated artifact.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "artifacts"
+                ],
+                "summary": "Update an artifact",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Artifact ID",
+                        "name": "artifact_id",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "description": "Update Artifact Request",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/artifact.UpdateArtifactRequestBody"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/artifact.UpdateArtifactResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/common.APIErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/common.APIErrorResponse"
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "definitions": {
+        "artifact.ArtifactData": {
+            "type": "object",
+            "properties": {
+                "artifact_link": {
+                    "type": "string"
+                },
+                "artifact_resource": {
+                    "type": "string"
+                },
+                "artifact_type": {
+                    "type": "string"
+                },
+                "build_error": {
+                    "type": "string"
+                },
+                "build_file_name": {
+                    "type": "string"
+                },
+                "build_id": {
+                    "type": "string"
+                },
+                "build_status": {
+                    "type": "string"
+                },
+                "create_at": {
+                    "type": "string"
+                },
+                "status": {
+                    "type": "string"
+                },
+                "update_at": {
+                    "type": "string"
+                }
+            }
+        },
+        "artifact.ArtifactDetails": {
+            "type": "object",
+            "properties": {
+                "model_description": {
+                    "type": "string"
+                }
+            }
+        },
+        "artifact.ArtifactMetadata": {
+            "type": "object",
+            "properties": {
+                "artifact_description": {
+                    "type": "string"
+                },
+                "artifact_icon_link": {
+                    "type": "string"
+                },
+                "artifact_name": {
+                    "type": "string"
+                },
+                "artifact_tags": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "artifact_template_id": {
+                    "type": "string"
+                },
+                "artifact_volume_path": {
+                    "type": "string"
+                },
+                "is_public": {
+                    "type": "boolean"
+                },
+                "org_id": {
+                    "type": "string"
+                },
+                "update_by": {
+                    "type": "string"
+                },
+                "user_id": {
+                    "type": "string"
+                }
+            }
+        },
+        "artifact.ArtifactParameters": {
+            "type": "object",
+            "properties": {
+                "env_parameters": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/artifact.EnvParameter"
+                    }
+                },
+                "model_parameters": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/artifact.ModelParameter"
+                    }
+                }
+            }
+        },
+        "artifact.BigFileMetadata": {
+            "type": "object",
+            "properties": {
+                "bucket_name": {
+                    "type": "string"
+                },
+                "file_name": {
+                    "type": "string"
+                },
+                "gcs_link": {
+                    "type": "string"
+                },
+                "upload_time": {
+                    "type": "string"
+                }
+            }
+        },
+        "artifact.CreateArtifactFromTemplateRequest": {
+            "type": "object",
+            "properties": {
+                "artifact_template_id": {
+                    "type": "string"
+                }
+            }
+        },
+        "artifact.CreateArtifactFromTemplateResponse": {
+            "type": "object",
+            "properties": {
+                "artifact_id": {
+                    "type": "string"
+                },
+                "status": {
+                    "type": "string"
+                }
+            }
+        },
+        "artifact.CreateArtifactRequest": {
+            "type": "object",
+            "properties": {
+                "artifact_description": {
+                    "type": "string"
+                },
+                "artifact_name": {
+                    "type": "string"
+                },
+                "artifact_tags": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "env_parameters": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/artifact.EnvParameter"
+                    }
+                },
+                "model_description": {
+                    "type": "string"
+                },
+                "model_parameters": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/artifact.ModelParameter"
+                    }
+                }
+            }
+        },
+        "artifact.CreateArtifactResponse": {
+            "type": "object",
+            "properties": {
+                "artifact_icon_link": {
+                    "type": "string"
+                },
+                "artifact_id": {
+                    "type": "string"
+                },
+                "upload_link": {
+                    "type": "string"
+                }
+            }
+        },
+        "artifact.DeleteArtifactResponse": {
+            "type": "object",
+            "properties": {
+                "artifact_id": {
+                    "type": "string"
+                },
+                "delete_at": {
+                    "type": "string"
+                },
+                "status": {
+                    "type": "string"
+                }
+            }
+        },
+        "artifact.DeleteBigFileResponse": {
+            "type": "object",
+            "properties": {
+                "artifact_id": {
+                    "type": "string"
+                },
+                "file_name": {
+                    "type": "string"
+                },
+                "status": {
+                    "type": "string"
+                }
+            }
+        },
+        "artifact.EnvParameter": {
+            "type": "object",
+            "required": [
+                "key",
+                "value"
+            ],
+            "properties": {
+                "key": {
+                    "type": "string"
+                },
+                "value": {
+                    "type": "string"
+                }
+            }
+        },
+        "artifact.GetAllArtifactsWithEndpointsResponse": {
+            "type": "object",
+            "properties": {
+                "artifact_data": {
+                    "$ref": "#/definitions/artifact.ArtifactData"
+                },
+                "artifact_details": {
+                    "$ref": "#/definitions/artifact.ArtifactDetails"
+                },
+                "artifact_id": {
+                    "type": "string"
+                },
+                "artifact_metadata": {
+                    "$ref": "#/definitions/artifact.ArtifactMetadata"
+                },
+                "artifact_parameters": {
+                    "$ref": "#/definitions/artifact.ArtifactParameters"
+                },
+                "big_files_metadata": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/artifact.BigFileMetadata"
+                    }
+                },
+                "endpoints": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/common.EndpointInfo"
+                    }
+                }
+            }
+        },
+        "artifact.GetArtifactResponse": {
+            "type": "object",
+            "properties": {
+                "artifact_id": {
+                    "type": "string"
+                },
+                "artifact_link": {
+                    "type": "string"
+                },
+                "artifact_metadata": {
+                    "$ref": "#/definitions/artifact.ArtifactMetadata"
+                },
+                "artifact_parameters": {
+                    "$ref": "#/definitions/artifact.ArtifactParameters"
+                },
+                "artifact_resource": {
+                    "type": "string"
+                },
+                "big_files_metadata": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/artifact.BigFileMetadata"
+                    }
+                },
+                "build_file_name": {
+                    "type": "string"
+                },
+                "build_status": {
+                    "type": "string"
+                }
+            }
+        },
+        "artifact.GetPublicArtifactsResponse": {
+            "type": "object",
+            "properties": {
+                "artifact_data": {
+                    "$ref": "#/definitions/artifact.ArtifactData"
+                },
+                "artifact_details": {
+                    "$ref": "#/definitions/artifact.ArtifactDetails"
+                },
+                "artifact_id": {
+                    "type": "string"
+                },
+                "artifact_metadata": {
+                    "$ref": "#/definitions/artifact.ArtifactMetadata"
+                },
+                "artifact_parameters": {
+                    "$ref": "#/definitions/artifact.ArtifactParameters"
+                },
+                "endpoints": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/common.EndpointInfo"
+                    }
+                }
+            }
+        },
+        "artifact.GetTemplatesResponse": {
+            "type": "object",
+            "properties": {
+                "artifact_templates": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/artifact.Template"
+                    }
+                }
+            }
+        },
+        "artifact.ModelParameter": {
+            "type": "object",
+            "required": [
+                "display_name",
+                "key",
+                "type",
+                "value"
+            ],
+            "properties": {
+                "category": {
+                    "type": "string"
+                },
+                "display_name": {
+                    "type": "string"
+                },
+                "key": {
+                    "type": "string"
+                },
+                "max": {
+                    "type": "number"
+                },
+                "min": {
+                    "type": "number"
+                },
+                "step": {
+                    "type": "number"
+                },
+                "type": {
+                    "type": "string",
+                    "enum": [
+                        "numeric",
+                        "text",
+                        "boolean"
+                    ]
+                },
+                "value": {}
+            }
+        },
+        "artifact.RayContent": {
+            "type": "object",
+            "required": [
+                "deployment_name",
+                "file_path"
+            ],
+            "properties": {
+                "deployment_name": {
+                    "type": "string"
+                },
+                "file_path": {
+                    "type": "string"
+                }
+            }
+        },
+        "artifact.RebuildArtifactRequest": {
+            "type": "object",
+            "properties": {
+                "artifact_id": {
+                    "type": "string"
+                }
+            }
+        },
+        "artifact.RebuildArtifactResponse": {
+            "type": "object",
+            "properties": {
+                "artifact_id": {
+                    "type": "string"
+                },
+                "build_status": {
+                    "type": "string"
+                }
+            }
+        },
+        "artifact.Resources": {
+            "type": "object",
+            "required": [
+                "cpu",
+                "gpu_name",
+                "memory"
+            ],
+            "properties": {
+                "cpu": {
+                    "type": "integer"
+                },
+                "gpu": {
+                    "type": "integer"
+                },
+                "gpu_name": {
+                    "type": "string"
+                },
+                "memory": {
+                    "type": "integer"
+                }
+            }
+        },
+        "artifact.ResumableUploadLinkRequest": {
+            "type": "object",
+            "properties": {
+                "artifact_id": {
+                    "type": "string"
+                },
+                "file_name": {
+                    "type": "string"
+                },
+                "file_type": {
+                    "type": "string"
+                }
+            }
+        },
+        "artifact.ResumableUploadLinkResponse": {
+            "type": "object",
+            "properties": {
+                "artifact_id": {
+                    "type": "string"
+                },
+                "upload_link": {
+                    "type": "string"
+                }
+            }
+        },
+        "artifact.Template": {
+            "type": "object",
+            "properties": {
+                "template_data": {
+                    "$ref": "#/definitions/artifact.TemplateData"
+                },
+                "template_id": {
+                    "type": "string"
+                },
+                "template_metadata": {
+                    "$ref": "#/definitions/artifact.TemplateMetadata"
+                }
+            }
+        },
+        "artifact.TemplateData": {
+            "type": "object",
+            "required": [
+                "image_link",
+                "name",
+                "volume_path"
+            ],
+            "properties": {
+                "description": {
+                    "type": "string"
+                },
+                "env_parameters": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/artifact.EnvParameter"
+                    }
+                },
+                "icon_link": {
+                    "type": "string"
+                },
+                "image_link": {
+                    "type": "string"
+                },
+                "model_description": {
+                    "type": "string"
+                },
+                "model_parameters": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/artifact.ModelParameter"
+                    }
+                },
+                "name": {
+                    "type": "string"
+                },
+                "ray": {
+                    "$ref": "#/definitions/artifact.RayContent"
+                },
+                "resources": {
+                    "$ref": "#/definitions/artifact.Resources"
+                },
+                "tags": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "volume_path": {
+                    "type": "string"
+                }
+            }
+        },
+        "artifact.TemplateMetadata": {
+            "type": "object",
+            "properties": {
+                "create_at": {
+                    "type": "string"
+                },
+                "create_by": {
+                    "type": "string"
+                },
+                "create_by_org_id": {
+                    "type": "string"
+                },
+                "is_public": {
+                    "type": "boolean"
+                },
+                "status": {
+                    "type": "string"
+                },
+                "update_at": {
+                    "type": "string"
+                },
+                "update_by": {
+                    "type": "string"
+                }
+            }
+        },
+        "artifact.UpdateArtifactRequestBody": {
+            "type": "object",
+            "properties": {
+                "artifact_description": {
+                    "type": "string"
+                },
+                "artifact_name": {
+                    "type": "string"
+                },
+                "artifact_tags": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "env_parameters": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/artifact.EnvParameter"
+                    }
+                },
+                "model_description": {
+                    "type": "string"
+                },
+                "model_parameters": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/artifact.ModelParameter"
+                    }
+                },
+                "need_update_icon": {
+                    "type": "boolean"
+                }
+            }
+        },
+        "artifact.UpdateArtifactResponse": {
+            "type": "object",
+            "properties": {
+                "artifact_icon_link": {
+                    "type": "string"
+                },
+                "artifact_id": {
+                    "type": "string"
+                },
+                "status": {
+                    "type": "string"
+                }
+            }
+        },
+        "common.APIErrorResponse": {
+            "type": "object",
+            "properties": {
+                "error": {
+                    "type": "string"
+                }
+            }
+        },
+        "common.EndpointInfo": {
+            "type": "object",
+            "properties": {
+                "endpoint_status": {
+                    "$ref": "#/definitions/common.EndpointStatus"
+                },
+                "endpoint_url": {
+                    "type": "string"
+                }
+            }
+        },
+        "common.EndpointStatus": {
+            "type": "string",
+            "enum": [
+                "ready",
+                "unready"
+            ],
+            "x-enum-varnames": [
+                "ENDPOINT_READY",
+                "ENDPOINT_UNREADY"
+            ]
+        }
+    },
+    "securityDefinitions": {
+        "BearerAuth": {
+            "description": "Type 'Bearer' followed by a space and your token",
+            "type": "apiKey",
+            "name": "Authorization",
+            "in": "header"
+        }
+    }
+}

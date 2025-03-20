@@ -12,7 +12,7 @@
     },
     "task_scheduling": {
       "scheduling_oneoff": {
-        "min_replicas": 1,
+        "min_replicas": "x",
         "max_replicas": 1
       }
     }

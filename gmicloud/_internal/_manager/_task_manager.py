@@ -63,6 +63,7 @@ class TaskManager:
         if not resp or not resp.task:
             raise ValueError("Failed to create task.")
 
+        logger.info(f"Task created: {resp.task.task_id}")
         return resp.task
 
     def create_task_from_file(self, artifact_id: str, config_file_path: str, trigger_timestamp: int = None) -> Task:
@@ -138,6 +139,37 @@ class TaskManager:
         return self.task_client.start_task(task_id)
     
 
+    def wait_for_task(self, task_id: str, timeout_s: int = 900) -> Task:
+        """
+        Wait for a task to reach the RUNNING state or raise an exception if it fails.
+
+        :param task_id: The ID of the task to wait for.
+        :param timeout_s: The timeout in seconds.
+        :return: The task object.
+        :rtype: Task
+        """
+        start_time = time.time()
+        while True:
+            try:
+                task = self.get_task(task_id)
+                if task.task_status == TaskStatus.RUNNING:
+                    if task.endpoint_info is not None and task.endpoint_info.endpoint_status == TaskEndpointStatus.RUNNING:
+                        return task
+                    else:
+                        if task.cluster_endpoints:
+                            for ce in task.cluster_endpoints:
+                                if ce.endpoint_status == TaskEndpointStatus.RUNNING:
+                                    return task
+                if task.task_status in [TaskStatus.NEEDSTOP, TaskStatus.ARCHIVED]:
+                    raise Exception(f"Unexpected task status after starting: {task.task_status}")
+                else:
+                    logger.info(f"Pending task starting. Task status: {task.task_status}")
+            except Exception as e:
+                logger.error(f"Failed to get task, Error: {e}")
+            if time.time() - start_time > timeout_s:
+                raise Exception(f"Task creation takes more than {timeout_s // 60} minutes. Testing aborted.")
+            time.sleep(10)
+
     def start_task_and_wait(self, task_id: str, timeout_s: int = 900) -> Task:
         """
         Start a task and wait for it to be ready.
@@ -147,39 +179,14 @@ class TaskManager:
         :return: The task object.
         :rtype: Task
         """
-        # trigger start task
         try:
             self.start_task(task_id)
             logger.info(f"Started task ID: {task_id}")
         except Exception as e:
             logger.error(f"Failed to start task, Error: {e}")
             raise e
-        
-        start_time = time.time()
-        while True:
-            try:
-                task = self.get_task(task_id)
-                if task.task_status == TaskStatus.RUNNING:
-                    return task
-                elif task.task_status in [TaskStatus.NEEDSTOP, TaskStatus.ARCHIVED]:
-                    raise Exception(f"Unexpected task status after starting: {task.task_status}")
-                # Also check endpoint status. 
-                elif task.task_status == TaskStatus.RUNNING:
-                    if task.endpoint_info and task.endpoint_info.endpoint_status == TaskEndpointStatus.RUNNING:
-                        return task
-                    elif task.endpoint_info and task.endpoint_info.endpoint_status in [TaskEndpointStatus.UNKNOWN, TaskEndpointStatus.ARCHIVED]:
-                        raise Exception(f"Unexpected endpoint status after starting: {task.endpoint_info.endpoint_status}")
-                    else:
-                        logger.info(f"Pending endpoint starting. endpoint status: {task.endpoint_info.endpoint_status}")
-                else:
-                    logger.info(f"Pending task starting. Task status: {task.task_status}")
 
-            except Exception as e:
-                logger.error(f"Failed to get task, Error: {e}")
-            if time.time() - start_time > timeout_s:
-                raise Exception(f"Task creation takes more than {timeout_s // 60} minutes. Testing aborted.")
-            time.sleep(10)
-
+        return self.wait_for_task(task_id, timeout_s)
 
     def stop_task(self, task_id: str) -> bool:
         """
@@ -190,16 +197,15 @@ class TaskManager:
         :raises ValueError: If `task_id` is invalid (None or empty string).
         """
         self._validate_not_empty(task_id, "Task ID")
+        return self.task_client.stop_task(task_id)
 
         
     def stop_task_and_wait(self, task_id: str, timeout_s: int = 900):
-        task_manager = self.task_manager
         try:
-            self.task_manager.stop_task(task_id)
+            self.stop_task(task_id)
             logger.info(f"Stopping task ID: {task_id}")
         except Exception as e:
             logger.error(f"Failed to stop task, Error: {e}")
-        task_manager = self.task_manager
         start_time = time.time()
         while True:
             try:
@@ -212,7 +218,6 @@ class TaskManager:
                 raise Exception(f"Task stopping takes more than {timeout_s // 60} minutes. Testing aborted.")
             time.sleep(10)
 
-        return self.task_client.stop_task(task_id)
 
     def get_usage_data(self, start_timestamp: str, end_timestamp: str) -> GetUsageDataResponse:
         """

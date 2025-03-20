@@ -131,34 +131,18 @@ class TestArtifactManager(unittest.TestCase):
         upload_link = "http://upload-link"
         bigfile_upload_link = "http://bigfile-upload-link"
         artifact_file_path = "./testdata/test.zip"
-        model_file_path = "./testdata/model.zip"
+        model_directory= "./testdata"
 
         mock_create_artifact.return_value = CreateArtifactResponse(artifact_id="1", upload_link=upload_link)
-        mock_get_bigfile_upload_url.return_value = GetBigFileUploadUrlResponse(artifact_id="1",
+        mock_get_bigfile_upload_url.return_value = ResumableUploadLinkResponse(artifact_id="1",
                                                                                upload_link=bigfile_upload_link)
 
         artifact_id = self.artifact_manager.create_artifact_with_model_files(artifact_name="artifact_name",
                                                                              artifact_file_path=artifact_file_path,
-                                                                             model_file_paths=[model_file_path])
+                                                                             model_directory=model_directory)
         self.assertEqual(artifact_id, "1")
         mock_upload_small_file.assert_called_once_with(upload_link, artifact_file_path, "application/zip")
-        mock_upload_large_file.assert_called_once_with(bigfile_upload_link, model_file_path)
-
-    @patch('gmicloud._internal._client._artifact_client.ArtifactClient.create_artifact')
-    @patch('gmicloud._internal._client._file_upload_client.FileUploadClient.upload_small_file')
-    def test_create_artifact_with_model_files_raises_file_not_found_error_for_model_file(self, mock_create_artifact,
-                                                                                         mock_upload_small_file):
-        upload_link = "http://upload-link"
-        artifact_file_path = "./testdata/test.zip"
-        model_file_path = "./testdata/nonexistent.zip"
-
-        mock_create_artifact.return_value = CreateArtifactResponse(artifact_id="1", upload_link=upload_link)
-
-        with self.assertRaises(FileNotFoundError) as context:
-            self.artifact_manager.create_artifact_with_model_files(artifact_name="artifact_name",
-                                                                   artifact_file_path=artifact_file_path,
-                                                                   model_file_paths=[model_file_path])
-        self.assertTrue(f"File not found: {model_file_path}" in str(context.exception))
+        self.assertEqual(mock_upload_large_file.call_count, 6) # 6 files in testdata directory
 
     @patch('gmicloud._internal._client._artifact_client.ArtifactClient.rebuild_artifact')
     def test_rebuild_artifact_rebuilds_successfully(self, mock_rebuild_artifact):
@@ -203,7 +187,7 @@ class TestArtifactManager(unittest.TestCase):
         upload_link = "http://upload-link"
         model_file_path = "./testdata/model.zip"
 
-        mock_get_bigfile_upload_url.return_value = GetBigFileUploadUrlResponse(artifact_id="1", upload_link=upload_link)
+        mock_get_bigfile_upload_url.return_value = ResumableUploadLinkResponse(artifact_id="1", upload_link=upload_link)
         upload_link = self.artifact_manager.get_bigfile_upload_url("1", model_file_path)
         self.assertEqual(upload_link, upload_link)
 
@@ -253,7 +237,7 @@ class TestArtifactManager(unittest.TestCase):
 
     @patch('gmicloud._internal._client._artifact_client.ArtifactClient.get_public_templates')
     def test_get_artifact_templates_returns_templates(self, mock_get_public_templates):
-        mock_get_public_templates.return_value = [ArtifactTemplate(template_id="1", template_data=TemplateData(name="Template1"))]
+        mock_get_public_templates.return_value = [Template(template_id="1", template_data=TemplateData(name="Template1"))]
         templates = self.artifact_manager.get_public_templates()
         self.assertEqual(len(templates), 1)
         self.assertEqual(templates[0].template_id, "1")
