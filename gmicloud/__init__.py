@@ -15,7 +15,7 @@ from ._internal._models import (
     OneOffScheduling,
     DailyScheduling,
     DailyTrigger,
-    ArtifactTemplate,
+    Template,
 )
 from ._internal._enums import (
     BuildStatus,
@@ -39,7 +39,7 @@ __all__ = [
     "OneOffScheduling",
     "DailyScheduling",
     "DailyTrigger",
-    "ArtifactTemplate",
+    "Template",
     "BuildStatus",
     "TaskEndpointStatus",
 ]

@@ -2,6 +2,9 @@ import os
 import time
 from typing import List
 import mimetypes
+import concurrent.futures
+from tqdm import tqdm
+from tqdm.contrib.logging import logging_redirect_tqdm
 
 from .._client._iam_client import IAMClient
 from .._client._artifact_client import ArtifactClient
@@ -211,7 +214,7 @@ class ArtifactManager:
         model_file_name = os.path.basename(model_file_path)
         model_file_type = mimetypes.guess_type(model_file_path)[0]
 
-        req = GetBigFileUploadUrlRequest(artifact_id=artifact_id, file_name=model_file_name, file_type=model_file_type)
+        req = ResumableUploadLinkRequest(artifact_id=artifact_id, file_name=model_file_name, file_type=model_file_type)
 
         resp = self.artifact_client.get_bigfile_upload_url(req)
         if not resp or not resp.upload_link:
@@ -250,36 +253,54 @@ class ArtifactManager:
 
         FileUploadClient.upload_large_file(upload_link, file_path)
 
+
     def create_artifact_with_model_files(
             self,
             artifact_name: str,
             artifact_file_path: str,
-            model_file_paths: List[str],
+            model_directory: str,
             description: Optional[str] = "",
             tags: Optional[str] = None
     ) -> str:
         """
         Create a new artifact for a user and upload model files associated with the artifact.
-
         :param artifact_name: The name of the artifact.
         :param artifact_file_path: The path to the artifact file(Dockerfile+serve.py).
-        :param model_file_paths: The paths to the model files.
+        :param model_directory: The path to the model directory.
         :param description: An optional description for the artifact.
         :param tags: Optional tags associated with the artifact, as a comma-separated string.
         :return: The `artifact_id` of the created artifact.
-        :raises FileNotFoundError: If the provided `file_path` does not exist.
         """
         artifact_id = self.create_artifact_with_file(artifact_name, artifact_file_path, description, tags)
+        logger.info(f"Artifact created: {artifact_id}")
 
-        for model_file_path in model_file_paths:
+        # List all files in the model directory recursively
+        model_file_paths = []
+        for root, _, files in os.walk(model_directory):
+            for file in files:
+                model_file_paths.append(os.path.join(root, file))
+
+        def upload_file(model_file_path):
             self._validate_file_path(model_file_path)
             bigfile_upload_url_resp = self.artifact_client.get_bigfile_upload_url(
-                GetBigFileUploadUrlRequest(artifact_id=artifact_id, model_file_path=model_file_path)
+                ResumableUploadLinkRequest(artifact_id=artifact_id, file_name=os.path.basename(model_file_path))
             )
             FileUploadClient.upload_large_file(bigfile_upload_url_resp.upload_link, model_file_path)
 
+        # Upload files in parallel with progress bar
+        with tqdm(total=len(model_file_paths), desc="Uploading model files") as progress_bar:
+            with logging_redirect_tqdm():
+                with concurrent.futures.ThreadPoolExecutor() as executor:
+                    futures = {executor.submit(upload_file, path): path for path in model_file_paths}
+                    for future in concurrent.futures.as_completed(futures):
+                        try:
+                            future.result()
+                        except Exception as e:
+                            logger.error(f"Failed to upload file {futures[future]}, Error: {e}")
+                        progress_bar.update(1)
+
         return artifact_id
-    
+
 
     def wait_for_artifact_ready(self, artifact_id: str, timeout_s: int = 900) -> None:
         """
@@ -304,12 +325,12 @@ class ArtifactManager:
             time.sleep(10)
 
     
-    def get_public_templates(self) -> List[ArtifactTemplate]:
+    def get_public_templates(self) -> List[Template]:
         """
         Fetch all artifact templates.
 
-        :return: A list of ArtifactTemplate objects.
-        :rtype: List[ArtifactTemplate]
+        :return: A list of Template objects.
+        :rtype: List[Template]
         """
         return self.artifact_client.get_public_templates()
         
