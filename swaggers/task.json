@@ -1,0 +1,874 @@
+{
+    "schemes": [],
+    "swagger": "2.0",
+    "info": {
+        "description": "API for managing job scheduler",
+        "title": "Job Scheduler Server",
+        "contact": {},
+        "version": "1.0"
+    },
+    "host": "",
+    "basePath": "/api/v1/ie/task",
+    "paths": {
+        "/archive_task": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Archives a task by changing its status to TASK_ARCHIVED",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "tasks"
+                ],
+                "summary": "Archive a task",
+                "parameters": [
+                    {
+                        "description": "Archive Task Request",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/jobscheduler.ArchiveTaskRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/jobscheduler.ArchiveTaskResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/common.APIErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/common.APIErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/create_task": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Creates a task with the given request",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "tasks"
+                ],
+                "summary": "Create a task",
+                "parameters": [
+                    {
+                        "description": "Create Task Request",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/jobscheduler.CreateTaskRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "$ref": "#/definitions/jobscheduler.CreateTaskResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/common.APIErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/common.APIErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/get_task": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Gets a task by its ID",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "tasks"
+                ],
+                "summary": "Get a task",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Task ID",
+                        "name": "task_id",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/common.Task"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/common.APIErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/common.APIErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/get_tasks": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Gets all tasks of a user",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "tasks"
+                ],
+                "summary": "Get user tasks",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/jobscheduler.GetTasksResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/common.APIErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/common.APIErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/get_usage_data": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Gets usage data by timestamp range",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "tasks"
+                ],
+                "summary": "Get usage data",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Start Timestamp",
+                        "name": "start_timestamp",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "End Timestamp",
+                        "name": "end_timestamp",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/jobscheduler.GetUsageDataResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/common.APIErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/common.APIErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/start_task": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Mark a task as in queue to indicate that the task is ready to be started",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "tasks"
+                ],
+                "summary": "Start a task",
+                "parameters": [
+                    {
+                        "description": "Start Task Request",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/jobscheduler.StartTaskRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/jobscheduler.StartTaskResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/common.APIErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/common.APIErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/stop_task": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Mark a task as needstop also update its scheduling config to empty",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "tasks"
+                ],
+                "summary": "Stop a task",
+                "parameters": [
+                    {
+                        "description": "Stop Task Request",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/jobscheduler.StopTaskRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/jobscheduler.StopTaskResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/common.APIErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/common.APIErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/update_schedule": {
+            "put": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Updates the scheduling configuration of a task",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "tasks"
+                ],
+                "summary": "Update task schedule",
+                "parameters": [
+                    {
+                        "description": "Update Task Schedule Request",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/jobscheduler.UpdateTaskScheduleRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/jobscheduler.UpdateTaskScheduleResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/common.APIErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/common.APIErrorResponse"
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "definitions": {
+        "common.APIErrorResponse": {
+            "type": "object",
+            "properties": {
+                "error": {
+                    "type": "string"
+                }
+            }
+        },
+        "common.AccessMode": {
+            "type": "string",
+            "enum": [
+                "ReadWriteOnce",
+                "ReadOnlyMany",
+                "ReadWriteMany",
+                "ReadWriteOncePod"
+            ],
+            "x-enum-varnames": [
+                "ReadWriteOnce",
+                "ReadOnlyMany",
+                "ReadWriteMany",
+                "ReadWriteOncePod"
+            ]
+        },
+        "common.EndpointInfo": {
+            "type": "object",
+            "properties": {
+                "endpoint_status": {
+                    "$ref": "#/definitions/common.EndpointStatus"
+                },
+                "endpoint_url": {
+                    "type": "string"
+                }
+            }
+        },
+        "common.EndpointStatus": {
+            "type": "string",
+            "enum": [
+                "ready",
+                "unready"
+            ],
+            "x-enum-varnames": [
+                "ENDPOINT_READY",
+                "ENDPOINT_UNREADY"
+            ]
+        },
+        "common.GPUName": {
+            "type": "string",
+            "enum": [
+                "H100",
+                "H200"
+            ],
+            "x-enum-varnames": [
+                "GPUH100Name",
+                "GPUH200Name"
+            ]
+        },
+        "common.GPUUsage": {
+            "type": "object",
+            "properties": {
+                "geo_location": {
+                    "type": "string"
+                },
+                "gpu_count": {
+                    "description": "8, 2.5, etc",
+                    "type": "number"
+                },
+                "gpu_type": {
+                    "description": "h100, h200, a100",
+                    "type": "string"
+                }
+            }
+        },
+        "common.Owner": {
+            "type": "object",
+            "properties": {
+                "is_public": {
+                    "type": "boolean"
+                },
+                "org_id": {
+                    "type": "string"
+                },
+                "service_account_id": {
+                    "type": "string"
+                },
+                "user_id": {
+                    "type": "string"
+                }
+            }
+        },
+        "common.RayReplicaResource": {
+            "type": "object",
+            "required": [
+                "cpu",
+                "ram_gb"
+            ],
+            "properties": {
+                "cpu": {
+                    "type": "number"
+                },
+                "gpu": {
+                    "type": "integer"
+                },
+                "gpu_name": {
+                    "$ref": "#/definitions/common.GPUName"
+                },
+                "ram_gb": {
+                    "type": "number"
+                }
+            }
+        },
+        "common.RayTaskConfig": {
+            "type": "object",
+            "required": [
+                "artifact_id",
+                "deployment_name",
+                "file_path",
+                "replica_resource"
+            ],
+            "properties": {
+                "artifact_id": {
+                    "type": "string"
+                },
+                "deployment_name": {
+                    "type": "string"
+                },
+                "file_path": {
+                    "type": "string"
+                },
+                "ray_cluster_image": {
+                    "type": "string"
+                },
+                "replica_resource": {
+                    "description": "Assume all replicas need the same resource.",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/common.RayReplicaResource"
+                        }
+                    ]
+                },
+                "volume_mounts": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/common.VolumeMount"
+                    }
+                }
+            }
+        },
+        "common.ReadinessStatus": {
+            "type": "string",
+            "enum": [
+                "pending",
+                "ready",
+                "failed"
+            ],
+            "x-enum-varnames": [
+                "READINESS_PENDING",
+                "READINESS_READY",
+                "READINESS_FAILED"
+            ]
+        },
+        "common.Task": {
+            "type": "object",
+            "properties": {
+                "cluster_endpoints": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/common.EndpointInfo"
+                    }
+                },
+                "config": {
+                    "$ref": "#/definitions/common.TaskConfig"
+                },
+                "endpoint_info": {
+                    "$ref": "#/definitions/common.EndpointInfo"
+                },
+                "owner": {
+                    "$ref": "#/definitions/common.Owner"
+                },
+                "readiness_status": {
+                    "$ref": "#/definitions/common.ReadinessStatus"
+                },
+                "task_id": {
+                    "type": "string"
+                },
+                "task_status": {
+                    "$ref": "#/definitions/common.TaskStatus"
+                }
+            }
+        },
+        "common.TaskConfig": {
+            "type": "object",
+            "properties": {
+                "create_timestamp": {
+                    "type": "integer"
+                },
+                "last_update_timestamp": {
+                    "type": "integer"
+                },
+                "ray_task_config": {
+                    "$ref": "#/definitions/common.RayTaskConfig"
+                },
+                "task_name": {
+                    "type": "string"
+                },
+                "task_scheduling": {
+                    "$ref": "#/definitions/common.TaskScheduling"
+                }
+            }
+        },
+        "common.TaskScheduling": {
+            "type": "object",
+            "properties": {
+                "scheduling_daily": {
+                    "$ref": "#/definitions/common.TaskSchedulingDaily"
+                },
+                "scheduling_oneoff": {
+                    "$ref": "#/definitions/common.TaskSchedulingOneoff"
+                }
+            }
+        },
+        "common.TaskSchedulingDaily": {
+            "type": "object",
+            "properties": {
+                "triggers": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/common.TaskSchedulingDailyTrigger"
+                    }
+                }
+            }
+        },
+        "common.TaskSchedulingDailyTrigger": {
+            "type": "object",
+            "properties": {
+                "Hour": {
+                    "type": "integer"
+                },
+                "max_replicas": {
+                    "description": "For daily triggering, MaxReplicas == 0 indicates no resource to be allocated.",
+                    "type": "integer"
+                },
+                "min_replicas": {
+                    "type": "integer"
+                },
+                "minute": {
+                    "type": "integer"
+                },
+                "second": {
+                    "type": "integer"
+                },
+                "timezone": {
+                    "type": "string"
+                }
+            }
+        },
+        "common.TaskSchedulingOneoff": {
+            "type": "object",
+            "properties": {
+                "max_replicas": {
+                    "description": "For one off triggering, MaxReplicas should be \u003e 0",
+                    "type": "integer"
+                },
+                "min_replicas": {
+                    "type": "integer"
+                },
+                "trigger_timestamp": {
+                    "type": "integer"
+                }
+            }
+        },
+        "common.TaskStatus": {
+            "type": "string",
+            "enum": [
+                "idle",
+                "starting",
+                "in-queue",
+                "running",
+                "needstop",
+                "archived"
+            ],
+            "x-enum-varnames": [
+                "TASK_IDLE",
+                "TASK_STARTING",
+                "TASK_IN_QUEUE",
+                "TASK_RUNNING",
+                "TASK_NEEDSTOP",
+                "TASK_ARCHIVED"
+            ]
+        },
+        "common.UsageData": {
+            "type": "object",
+            "properties": {
+                "gpu_usage_list": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/common.GPUUsage"
+                    }
+                },
+                "id": {
+                    "type": "string"
+                },
+                "org_id": {
+                    "type": "string"
+                },
+                "replica_count": {
+                    "type": "integer"
+                },
+                "task_id": {
+                    "type": "string"
+                },
+                "timestamp": {
+                    "type": "integer"
+                },
+                "user_id": {
+                    "type": "string"
+                }
+            }
+        },
+        "common.UserPreference": {
+            "type": "object",
+            "properties": {
+                "block_list": {
+                    "description": "List of locations to block",
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "preference_scale": {
+                    "description": "Scale between 0 (cost) and 1 (speed)",
+                    "type": "number"
+                }
+            }
+        },
+        "common.VolumeMount": {
+            "type": "object",
+            "properties": {
+                "access_mode": {
+                    "description": "ReadWriteOnce, ReadOnlyMany, ReadWriteMany, or ReadWriteOncePod",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/common.AccessMode"
+                        }
+                    ]
+                },
+                "capacity_GB": {
+                    "type": "number"
+                },
+                "host_path": {
+                    "type": "string"
+                },
+                "mount_path": {
+                    "type": "string"
+                }
+            }
+        },
+        "jobscheduler.ArchiveTaskRequest": {
+            "type": "object",
+            "properties": {
+                "task_id": {
+                    "type": "string"
+                }
+            }
+        },
+        "jobscheduler.ArchiveTaskResponse": {
+            "type": "object"
+        },
+        "jobscheduler.CreateTaskRequest": {
+            "type": "object",
+            "properties": {
+                "config": {
+                    "$ref": "#/definitions/common.TaskConfig"
+                },
+                "owner": {
+                    "$ref": "#/definitions/common.Owner"
+                },
+                "user_preference": {
+                    "$ref": "#/definitions/common.UserPreference"
+                }
+            }
+        },
+        "jobscheduler.CreateTaskResponse": {
+            "type": "object",
+            "properties": {
+                "task": {
+                    "$ref": "#/definitions/common.Task"
+                },
+                "upload_link": {
+                    "type": "string"
+                }
+            }
+        },
+        "jobscheduler.GetTasksResponse": {
+            "type": "object",
+            "properties": {
+                "tasks": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/common.Task"
+                    }
+                }
+            }
+        },
+        "jobscheduler.GetUsageDataResponse": {
+            "type": "object",
+            "properties": {
+                "usage_data": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/common.UsageData"
+                    }
+                }
+            }
+        },
+        "jobscheduler.StartTaskRequest": {
+            "type": "object",
+            "properties": {
+                "task_id": {
+                    "type": "string"
+                }
+            }
+        },
+        "jobscheduler.StartTaskResponse": {
+            "type": "object"
+        },
+        "jobscheduler.StopTaskRequest": {
+            "type": "object",
+            "properties": {
+                "task_id": {
+                    "type": "string"
+                }
+            }
+        },
+        "jobscheduler.StopTaskResponse": {
+            "type": "object"
+        },
+        "jobscheduler.UpdateTaskScheduleRequest": {
+            "type": "object",
+            "properties": {
+                "task_id": {
+                    "type": "string"
+                },
+                "task_scheduling": {
+                    "$ref": "#/definitions/common.TaskScheduling"
+                }
+            }
+        },
+        "jobscheduler.UpdateTaskScheduleResponse": {
+            "type": "object"
+        }
+    },
+    "securityDefinitions": {
+        "BearerAuth": {
+            "description": "Type 'Bearer' followed by a space and your token",
+            "type": "apiKey",
+            "name": "Authorization",
+            "in": "header"
+        }
+    }
+}

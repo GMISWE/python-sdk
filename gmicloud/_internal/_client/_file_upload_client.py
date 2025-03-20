@@ -1,8 +1,10 @@
 import os
 import requests
+import logging
 
 from .._exceptions import UploadFileError
 
+logger = logging.getLogger()
 
 class FileUploadClient:
     CHUNK_SIZE = 10 * 1024 * 1024  # 10MB Default Chunk Size
@@ -45,13 +47,13 @@ class FileUploadClient:
         """
         try:
             file_size = os.path.getsize(file_path)
-            print(f"File Size: {file_size} bytes")
+            logger.info(f"File {file_path} size: {file_size} bytes")
 
             start_byte = 0
             uploaded_range = FileUploadClient._check_file_status(upload_url, file_size)
             if uploaded_range:
                 start_byte = int(uploaded_range.split("-")[1]) + 1
-                print(f"Resuming upload from {start_byte} bytes")
+                logger.info(f"Resuming uploading {file_path} from {start_byte} bytes")
 
             with open(file_path, "rb") as file:
                 while start_byte < file_size:
@@ -74,14 +76,15 @@ class FileUploadClient:
                     # Ensure upload is successful for this chunk
                     if resp.status_code not in (200, 201, 308):
                         raise UploadFileError(
-                            f"Failed to upload file, code:{resp.status_code} ,message: {resp.text}")
+                            f"Failed to upload file {file_path}, code:{resp.status_code} ,message: {resp.text}")
 
                     start_byte = end_byte + 1
-                    print(f"Uploaded {end_byte + 1}/{file_size} bytes")
+                    percentage = (start_byte / file_size) * 100
+                    logger.info(f"File {file_path} uploaded {end_byte + 1:,}/{file_size:,} bytes ({percentage:.2f}%)")
 
-                print("Upload completed successfully.")
+                logger.info(f"File {file_path} uploaded successfully.")
         except Exception as e:
-            raise UploadFileError(f"Failed to upload file: {str(e)}")
+            raise UploadFileError(f"Failed to upload file {file_path}, got error: {str(e)}")
 
     @staticmethod
     def _check_file_status(upload_url: str, file_size: int) -> str:
@@ -104,7 +107,7 @@ class FileUploadClient:
             if resp.status_code == 308:
                 range_header = resp.headers.get("Range")
                 if range_header:
-                    print(f"Server reports partial upload range: {range_header}")
+                    logger.info(f"Server reports partial upload range: {range_header}")
                 return range_header
 
             if resp.status_code in (200, 201):

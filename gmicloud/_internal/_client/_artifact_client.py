@@ -140,7 +140,7 @@ class ArtifactClient:
             return None
 
     @handle_refresh_token
-    def get_bigfile_upload_url(self, request: GetBigFileUploadUrlRequest) -> Optional[GetBigFileUploadUrlResponse]:
+    def get_bigfile_upload_url(self, request: ResumableUploadLinkRequest) -> Optional[ResumableUploadLinkResponse]:
         """
         Generates a pre-signed URL for uploading a large file.
 
@@ -156,7 +156,7 @@ class ArtifactClient:
                 logger.error("Empty response from /get_bigfile_upload_url")
                 return None
 
-            return GetBigFileUploadUrlResponse.model_validate(response)
+            return ResumableUploadLinkResponse.model_validate(response)
 
         except (RequestException, ValueError) as e:
             logger.error(f"Failed to generate upload URL: {e}")
@@ -186,12 +186,12 @@ class ArtifactClient:
             return None
 
     @handle_refresh_token
-    def get_public_templates(self) -> List[ArtifactTemplate]:
+    def get_public_templates(self) -> List[Template]:
         """
         Fetches all artifact templates.
 
-        :return: A list of ArtifactTemplate objects.
-        :rtype: List[ArtifactTemplate]
+        :return: A list of Template objects.
+        :rtype: List[Template]
         """
         try:
             response = self.client.get("/get_public_templates", self.iam_client.get_custom_headers())
@@ -201,7 +201,7 @@ class ArtifactClient:
                 return []
 
             try:
-                result = GetPublicTemplatesResponse.model_validate(response)
+                result = GetTemplatesResponse.model_validate(response)
                 return result.artifact_templates
             except ValueError as ve:
                 logger.error(f"Failed to validate response data: {ve}")

@@ -22,9 +22,13 @@ class ArtifactMetadata(BaseModel):
     user_id: Optional[str] = ""  # The user ID associated with this artifact.
     artifact_name: Optional[str] = ""  # Name of the artifact.
     artifact_description: Optional[str] = ""  # Description of the artifact.
-    artifact_tags: Optional[List[str]] = ""  # Comma-separated tags for categorizing the artifact.
+    artifact_tags: Optional[List[str]] = None  # Changed from List[str] with default to Optional[List[str]]
     artifact_volume_path: Optional[str] = ""  # Path to the volume where the artifact is stored.
     artifact_template_id: Optional[str] = ""  # The template ID used to create this artifact.
+    artifact_icon_link: Optional[str] = ""  # Link to the icon for the artifact.
+    is_public: Optional[bool] = False  # Indicates if the artifact is public.
+    org_id: Optional[str] = ""  # Organization ID associated with this artifact.
+    update_by: Optional[str] = ""  # User ID who last updated the artifact.
 
 
 class ArtifactData(BaseModel):
@@ -41,6 +45,29 @@ class ArtifactData(BaseModel):
     build_id: Optional[str] = ""  # ID of the build process associated with the artifact.
     create_at: Optional[datetime]  # Timestamp when the artifact was created.
     update_at: Optional[datetime]  # Timestamp when the artifact was last updated.
+
+
+class EnvParameter(BaseModel):
+    """
+    Environment parameter for an artifact.
+    """
+    key: str  # Key for the environment parameter.
+    value: str  # Value for the environment parameter.
+
+
+class ArtifactDetails(BaseModel):
+    """
+    Additional details for an artifact.
+    """
+    model_description: Optional[str] = ""  # Description of the model.
+
+
+class ArtifactParameters(BaseModel):
+    """
+    Parameters for an artifact.
+    """
+    env_parameters: Optional[List[EnvParameter]] = None  # Environment parameters.
+    model_parameters: Optional[List["ModelParameter"]] = None  # Model parameters.
 
 
 class Artifact(BaseModel):
@@ -69,7 +96,9 @@ class CreateArtifactRequest(BaseModel):
     """
     artifact_name: str  # The name of the artifact to create.
     artifact_description: Optional[str] = ""  # Description of the artifact.
-    artifact_tags: Optional[List[str]] = None  # Tags for the artifact, separated by commas.
+    artifact_tags: Optional[List[str]] = None  # Tags for the artifact.
+    env_parameters: Optional[List["EnvParameter"]] = None  # Environment parameters.
+    model_description: Optional[str] = ""  # Description of the model.
     model_parameters: Optional[List["ModelParameter"]] = None  # Parameters for the artifact.
 
 
@@ -79,9 +108,10 @@ class CreateArtifactResponse(BaseModel):
     """
     artifact_id: str  # ID of the newly created artifact.
     upload_link: str  # URL to upload the artifact data.
+    artifact_icon_link: Optional[str] = ""  # Link to the icon for the artifact.
 
 
-class GetBigFileUploadUrlRequest(BaseModel):
+class ResumableUploadLinkRequest(BaseModel):
     """
     Request to generate a pre-signed URL for uploading large files.
     """
@@ -90,12 +120,19 @@ class GetBigFileUploadUrlRequest(BaseModel):
     file_type: Optional[str] = ""  # MIME type of the file.
 
 
-class GetBigFileUploadUrlResponse(BaseModel):
+class ResumableUploadLinkResponse(BaseModel):
     """
     Response containing a pre-signed upload URL for large files.
     """
     artifact_id: str  # ID of the artifact.
     upload_link: str  # Pre-signed upload URL for the file.
+
+
+class RebuildArtifactRequest(BaseModel):
+    """
+    Request object for rebuilding an artifact.
+    """
+    artifact_id: str  # ID of the artifact to rebuild.
 
 
 class RebuildArtifactResponse(BaseModel):
@@ -104,6 +141,91 @@ class RebuildArtifactResponse(BaseModel):
     """
     artifact_id: str  # ID of the rebuilt artifact.
     build_status: BuildStatus  # Status of the artifact build (e.g., in progress, succeeded, failed).
+
+
+class EndpointInfo(BaseModel):
+    """
+    Additional information about the task endpoint.
+    """
+    endpoint_status: Optional[TaskEndpointStatus] = None  # Current status of the task (e.g., running, stopped).
+    endpoint_url: Optional[str] = ""  # URL for accessing the task endpoint.
+
+
+class GetAllArtifactsWithEndpointsResponse(BaseModel):
+    """
+    Response containing a list of all artifacts with their endpoints.
+    """
+    artifact_id: str  # Unique identifier for the artifact.
+    artifact_data: Optional[ArtifactData] = None  # Data associated with the artifact.
+    artifact_metadata: Optional[ArtifactMetadata] = None  # Metadata describing the artifact.
+    artifact_details: Optional[ArtifactDetails] = None  # Additional details about the artifact.
+    artifact_parameters: Optional[ArtifactParameters] = None  # Parameters for the artifact.
+    big_files_metadata: Optional[List[BigFileMetadata]] = None  # Metadata for large files.
+    endpoints: Optional[List[EndpointInfo]] = None  # Endpoints associated with the artifact.
+
+
+class GetArtifactResponse(BaseModel):
+    """
+    Response containing the details of an artifact.
+    """
+    artifact_id: str  # Unique identifier for the artifact.
+    artifact_link: Optional[str] = ""  # Link to access the artifact.
+    artifact_resource: Optional[str] = ""  # Resource associated with the artifact.
+    build_file_name: Optional[str] = ""  # Name of the file used for the build.
+    build_status: Optional[str] = ""  # Status of the artifact build.
+    artifact_metadata: Optional[ArtifactMetadata] = None  # Metadata describing the artifact.
+    artifact_parameters: Optional[ArtifactParameters] = None  # Parameters for the artifact.
+    big_files_metadata: Optional[List[BigFileMetadata]] = None  # Metadata for large files.
+
+
+class GetPublicArtifactsResponse(BaseModel):
+    """
+    Response containing public artifact details.
+    """
+    artifact_id: str  # Unique identifier for the artifact.
+    artifact_data: Optional[ArtifactData] = None  # Data associated with the artifact.
+    artifact_metadata: Optional[ArtifactMetadata] = None  # Metadata describing the artifact.
+    artifact_details: Optional[ArtifactDetails] = None  # Additional details about the artifact.
+    artifact_parameters: Optional[ArtifactParameters] = None  # Parameters for the artifact.
+    endpoints: Optional[List[EndpointInfo]] = None  # Endpoints associated with the artifact.
+
+
+class UpdateArtifactRequestBody(BaseModel):
+    """
+    Request object for updating an artifact.
+    """
+    artifact_name: Optional[str] = ""  # The name of the artifact.
+    artifact_description: Optional[str] = ""  # Description of the artifact.
+    artifact_tags: Optional[List[str]] = None  # Tags for the artifact.
+    env_parameters: Optional[List[EnvParameter]] = None  # Environment parameters.
+    model_description: Optional[str] = ""  # Description of the model.
+    model_parameters: Optional[List["ModelParameter"]] = None  # Parameters for the artifact.
+    need_update_icon: Optional[bool] = False  # Whether to update the artifact icon.
+
+
+class UpdateArtifactResponse(BaseModel):
+    """
+    Response object after updating an artifact.
+    """
+    artifact_id: str  # ID of the updated artifact.
+    status: str  # Status of the update operation.
+    artifact_icon_link: Optional[str] = ""  # Link to the icon for the artifact.
+
+
+class GetTemplatesResponse(BaseModel):
+    """
+    Response containing a list of artifact templates.
+    """
+    artifact_templates: list["Template"]  # List of artifact templates.
+
+
+class Template(BaseModel):
+    """
+    Template for creating an artifact.
+    """
+    template_id: str  # Unique identifier for the artifact template.
+    template_data: Optional["TemplateData"] = None  # Data for the artifact template.
+    template_metadata: Optional["TemplateMetadata"] = None  # Metadata for the artifact template.
 
 
 class DeleteArtifactResponse(BaseModel):
@@ -132,22 +254,6 @@ class DeleteBigfileResponse(BaseModel):
     status: Optional[str] = ""  # Status of the deletion process.
 
 
-class GetPublicTemplatesResponse(BaseModel):
-    """
-    Response containing a list of artifact templates.
-    """
-    artifact_templates: list["ArtifactTemplate"]  # List of artifact templates.
-
-
-class ArtifactTemplate(BaseModel):
-    """
-    Template for creating an artifact.
-    """
-    template_id: str  # Unique identifier for the artifact template.
-    template_data: Optional["TemplateData"] = None  # Data for the artifact template.
-    template_metadata: Optional["TemplateMetadata"] = None  # Metadata for the artifact template.
-
-
 class TemplateMetadata(BaseModel):
     """
     Metadata for an artifact template.
@@ -158,6 +264,7 @@ class TemplateMetadata(BaseModel):
     is_public: Optional[bool] = False  # Indicates if the template is public.
     update_at: Optional[str] = None  # Timestamp when the template was last updated.
     update_by: Optional[str] = ""  # ID of the user who last updated the template.
+    status: Optional[str] = ""  # Status of the template.
 
 
 class TemplateData(BaseModel):
@@ -173,6 +280,7 @@ class TemplateData(BaseModel):
     resources: Optional["ResourcesTemplate"] = None  # Resource allocation template.
     tags: Optional[List[str]] = None  # Tags associated with the artifact template.
     volume_path: Optional[str] = ""  # Path to the volume where the artifact is stored.
+    env_parameters: Optional[List["EnvParameter"]] = None  # Added missing field
 
 
 class ModelParameter(BaseModel):
@@ -304,14 +412,6 @@ class TaskConfig(BaseModel):
     last_update_timestamp: Optional[int] = 0  # Timestamp when the task was last updated.
 
 
-class EndpointInfo(BaseModel):
-    """
-    Additional information about the task endpoint.
-    """
-    endpoint_status: Optional[TaskEndpointStatus] = None  # Current status of the task (e.g., running, stopped).
-    endpoint_url: Optional[str] = ""  # URL for accessing the task endpoint.
-
-
 class UserPreference(BaseModel):
     """
     User preference for a task.
@@ -329,8 +429,8 @@ class Task(BaseModel):
     config: Optional[TaskConfig] = None  # Configuration data for the task.
     endpoint_info: Optional[EndpointInfo] = None  # Additional information about the task endpoint.
     cluster_endpoints: Optional[List[EndpointInfo]] = None  # Endpoints for the task cluster.
-    task_status: Optional[TaskStatus] = ""  # Status of the task.
-    readiness_status: Optional[str] = ""  # Readiness status of the task.
+    task_status: Optional[TaskStatus] = None  # Status of the task.
+    readiness_status: Optional[str] = None  # Readiness status of the task.
     user_preference: Optional[UserPreference] = None  # User preference for the task.
 
 
