@@ -139,7 +139,7 @@ class TaskManager:
         return self.task_client.start_task(task_id)
     
 
-    def wait_for_task(self, task_id: str, timeout_s: int = 900) -> Task:
+    def wait_for_task(self, task_id: str, timeout_s: int = 1800) -> Task:
         """
         Wait for a task to reach the RUNNING state or raise an exception if it fails.
 
@@ -170,7 +170,7 @@ class TaskManager:
                 raise Exception(f"Task creation takes more than {timeout_s // 60} minutes. Testing aborted.")
             time.sleep(10)
 
-    def start_task_and_wait(self, task_id: str, timeout_s: int = 900) -> Task:
+    def start_task_and_wait(self, task_id: str, timeout_s: int = 1800) -> Task:
         """
         Start a task and wait for it to be ready.
 
