@@ -9,6 +9,8 @@ from openai import OpenAI
 logger = logging.getLogger(__name__)
 
 
+
+
 def call_chat_completion(client: Client, task_id: str) -> str:
     task_manager = client.task_manager
     try:
@@ -18,17 +20,17 @@ def call_chat_completion(client: Client, task_id: str) -> str:
         raise e
 
     endpoint_url = ""
-    if task.endpoint_info is not None and task.endpoint_info.endpoint_status == TaskEndpointStatus.RUNNING:
-        logger.info(f"Task endpoint is running, endpoint url: {task.endpoint_info.endpoint_url}")
-        endpoint_url = task.endpoint_info.endpoint_url
-    else:
-        logger.info("Task endpoint is not running, trying endpoints of sub jobs")
+    # if task.endpoint_info is not None and task.endpoint_info.endpoint_status == TaskEndpointStatus.RUNNING:
+    #     logger.info(f"Task endpoint is running, endpoint url: {task.endpoint_info.endpoint_url}")
+    #     endpoint_url = task.endpoint_info.endpoint_url
+    # else:
+    #     logger.info("Task endpoint is not running, trying endpoints of sub jobs")
 
-        for ce in task.cluster_endpoints:
-            if ce.endpoint_status == TaskEndpointStatus.RUNNING:
-                logger.info(f"Cluster endpoint is running, endpoint url: {ce.endpoint_url}")
-                endpoint_url = ce.endpoint_url
-                break
+    for ce in task.cluster_endpoints:
+        if ce.endpoint_status == TaskEndpointStatus.RUNNING:
+            logger.info(f"Cluster endpoint is running, endpoint url: {ce.endpoint_url}")
+            endpoint_url = ce.endpoint_url
+            break
 
     if endpoint_url == "":
         raise Exception("No endpoint url found")
