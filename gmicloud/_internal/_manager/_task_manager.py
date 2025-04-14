@@ -41,7 +41,7 @@ class TaskManager:
 
         :return: A list of `Task` objects.
         """
-        resp = self.task_client.get_all_tasks(self.iam_client.get_user_id())
+        resp = self.task_client.get_all_tasks()
         if not resp or not resp.tasks:
             return []
 
