@@ -314,6 +314,7 @@ class CreateArtifactFromTemplateRequest(BaseModel):
     """
     user_id: str  # The user ID creating the artifact.
     artifact_template_id: str  # The ID of the artifact template to use.
+    env_parameters: Optional[List["EnvParameter"]] = None  # Environment parameters.
 
 
 class CreateArtifactFromTemplateResponse(BaseModel):

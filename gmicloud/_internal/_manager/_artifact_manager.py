@@ -3,6 +3,7 @@ import time
 from typing import List
 import mimetypes
 import concurrent.futures
+from sympy import re
 from tqdm import tqdm
 from tqdm.contrib.logging import logging_redirect_tqdm
 
@@ -76,7 +77,7 @@ class ArtifactManager:
 
         return self.artifact_client.create_artifact(req)
 
-    def create_artifact_from_template(self, artifact_template_id: str) -> str:
+    def create_artifact_from_template(self, artifact_template_id: str, env_parameters: Optional[dict[str, str]] = None) -> str:
         """
         Create a new artifact for a user using a template.
 
@@ -88,13 +89,56 @@ class ArtifactManager:
         if not artifact_template_id or not artifact_template_id.strip():
             raise ValueError("Artifact template ID is required and cannot be empty.")
 
-        resp = self.artifact_client.create_artifact_from_template(artifact_template_id)
+        resp = self.artifact_client.create_artifact_from_template(artifact_template_id, env_parameters)
         if not resp or not resp.artifact_id:
             raise ValueError("Failed to create artifact from template.")
 
         return resp.artifact_id
     
-    def create_artifact_from_template_name(self, artifact_template_name: str) -> tuple[str, ReplicaResource]:
+    def _parse_serve_command(self, command: str) -> dict[str, Union[str, int]]:
+        result = {
+            "type": None,  # 'vllm' or 'sglang'
+            "tp": None,
+            "pp": None,
+            "dp": None
+        }
+
+        # Normalize command by stripping and converting dashes to a consistent form
+        command = command.strip().replace("–", "--")
+
+        # Determine type
+        if "sglang.launch_server" in command:
+            result["type"] = "sglang"
+        elif "vllm serve" in command or re.search(r"\bvllm\b", command):
+            result["type"] = "vllm"
+
+        if result["type"] not in ["sglang", "vllm"]:
+            raise ValueError("Serve command must be either sglang or vllm type")
+
+        # Extract -tp, -pp, -dp for sglang style
+        match_tp = re.search(r"[-]{1,2}tp[=\s]+(\d+)", command)
+        match_pp = re.search(r"[-]{1,2}pp[=\s]+(\d+)", command)
+        match_dp = re.search(r"[-]{1,2}dp[=\s]+(\d+)", command)
+
+        # Extract for vllm style --tensor-parallel-size, etc.
+        if not match_tp:
+            match_tp = re.search(r"--tensor-parallel-size[=\s]+(\d+)", command)
+        if not match_pp:
+            match_pp = re.search(r"--pipeline-parallel-size[=\s]+(\d+)", command)
+        if not match_dp:
+            match_dp = re.search(r"--data-parallel-size[=\s]+(\d+)", command)
+
+        if match_tp:
+            result["tp"] = int(match_tp.group(1))
+        if match_pp:
+            result["pp"] = int(match_pp.group(1))
+        if match_dp:
+            result["dp"] = int(match_dp.group(1))
+
+        return result
+
+    
+    def create_artifact_from_template_name(self, artifact_template_name: str, env_parameters: Optional[dict[str, str]] = None) -> tuple[str, ReplicaResource]:
         """
         Create an artifact from a template.
         :param artifact_template_name: The name of the template to use.
@@ -104,25 +148,56 @@ class ArtifactManager:
 
         recommended_replica_resources = None
         template_id = None
+        picked_template = None
         try:
             templates = self.get_public_templates()
         except Exception as e:
             logger.error(f"Failed to get artifact templates, Error: {e}")
         for template in templates:
             if template.template_data and template.template_data.name == artifact_template_name:
-                resources_template = template.template_data.resources
-                recommended_replica_resources = ReplicaResource(
-                    cpu=resources_template.cpu,
-                    ram_gb=resources_template.memory,
-                    gpu=resources_template.gpu,
-                    gpu_name=resources_template.gpu_name,
-                )
+                picked_template = template
                 template_id = template.template_id
                 break
         if not template_id:
             raise ValueError(f"Template with name {artifact_template_name} not found.")
+        
+        if "SERVE_COMMAND" not in env_parameters:
+            resources_template = template.template_data.resources
+            recommended_replica_resources = ReplicaResource(
+                cpu=resources_template.cpu,
+                ram_gb=resources_template.memory,
+                gpu=resources_template.gpu,
+                gpu_name=resources_template.gpu_name,
+            )
+        else:
+            try:
+                server_command = env_parameters["SERVE_COMMAND"]
+                server_command_dict = self._parse_serve_command(server_command)
+                if "GPU_TYPE" not in env_parameters:
+                    raise ValueError("GPU_TYPE is required as environment variable")
+                gpu_type = env_parameters["GPU_TYPE"]
+                if gpu_type not in ["H100", "H200"]:
+                    raise ValueError("Only support A100 and H100 for now")
+                num_gpus = 1
+                if "tp" in server_command_dict:
+                    num_gpus *= server_command_dict["tp"]
+                elif "pp" in server_command_dict:
+                    num_gpus *= server_command_dict["pp"]
+                elif "dp" in server_command_dict:
+                    num_gpus *= server_command_dict["dp"]
+                if num_gpus > 8:
+                    raise ValueError("Only support up to 8 GPUs for single task replica.")
+                recommended_replica_resources = ReplicaResource(
+                    cpu=num_gpus * 8,
+                    ram_gb=num_gpus * 100,
+                    gpu=num_gpus,
+                    gpu_name=gpu_type,
+                )
+            except Exception as e:
+                raise ValueError(f"Failed to parse serve command, Error: {e}")
+
         try: 
-            artifact_id = self.create_artifact_from_template(template_id)
+            artifact_id = self.create_artifact_from_template(template_id, env_parameters)
             self.wait_for_artifact_ready(artifact_id)
             return artifact_id, recommended_replica_resources
         except Exception as e:

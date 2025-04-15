@@ -83,7 +83,7 @@ class ArtifactClient:
             return None
 
     @handle_refresh_token
-    def create_artifact_from_template(self, artifact_template_id: str) -> Optional[CreateArtifactFromTemplateResponse]:
+    def create_artifact_from_template(self, artifact_template_id: str, env_parameters: Optional[dict[str, str]] = None) -> Optional[CreateArtifactFromTemplateResponse]:
         """
         Creates a new artifact in the service.
 
@@ -91,10 +91,15 @@ class ArtifactClient:
         :return: The response object containing the created artifact details or None if an error occurs.
         """
         try:
+            payload = {
+                "artifact_template_id": artifact_template_id
+            }
+            if env_parameters:
+                payload["env_parameters"] = [EnvParameter(key=k, value=v) for k, v in env_parameters.items()]
             response = self.client.post(
                 "/create_artifact_from_template",
                 self.iam_client.get_custom_headers(),
-                {"artifact_template_id": artifact_template_id}
+                payload
             )
             return CreateArtifactFromTemplateResponse.model_validate(response) if response else None
         except (RequestException, ValueError) as e:
