@@ -41,6 +41,9 @@ artifact_id, recommended_replica_resources = cli.artifact_manager.create_artifac
 )
 print(f"Created artifact {artifact_id}")
 
+# Upload model files to artifact
+cli.artifact_manager.upload_model_files_to_artifact(artifact_id, model_checkpoint_save_dir)
+
 # Create Task based on Artifact
 new_task = Task(
     config=TaskConfig(

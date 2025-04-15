@@ -329,25 +329,13 @@ class ArtifactManager:
         FileUploadClient.upload_large_file(upload_link, file_path)
 
 
-    def create_artifact_with_model_files(
-            self,
-            artifact_name: str,
-            artifact_file_path: str,
-            model_directory: str,
-            description: Optional[str] = "",
-            tags: Optional[str] = None
-    ) -> str:
+    def upload_model_files_to_artifact(self, artifact_id: str, model_directory: str) -> None:
         """
-        Create a new artifact for a user and upload model files associated with the artifact.
-        :param artifact_name: The name of the artifact.
-        :param artifact_file_path: The path to the artifact file(Dockerfile+serve.py).
+        Upload model files to an existing artifact.
+
+        :param artifact_id: The ID of the artifact to upload the model files to.
         :param model_directory: The path to the model directory.
-        :param description: An optional description for the artifact.
-        :param tags: Optional tags associated with the artifact, as a comma-separated string.
-        :return: The `artifact_id` of the created artifact.
         """
-        artifact_id = self.create_artifact_with_file(artifact_name, artifact_file_path, description, tags)
-        logger.info(f"Artifact created: {artifact_id}")
 
         # List all files in the model directory recursively
         model_file_paths = []
@@ -373,6 +361,28 @@ class ArtifactManager:
                         except Exception as e:
                             logger.error(f"Failed to upload file {futures[future]}, Error: {e}")
                         progress_bar.update(1)
+
+    def create_artifact_with_model_files(
+            self,
+            artifact_name: str,
+            artifact_file_path: str,
+            model_directory: str,
+            description: Optional[str] = "",
+            tags: Optional[str] = None
+    ) -> str:
+        """
+        Create a new artifact for a user and upload model files associated with the artifact.
+        :param artifact_name: The name of the artifact.
+        :param artifact_file_path: The path to the artifact file(Dockerfile+serve.py).
+        :param model_directory: The path to the model directory.
+        :param description: An optional description for the artifact.
+        :param tags: Optional tags associated with the artifact, as a comma-separated string.
+        :return: The `artifact_id` of the created artifact.
+        """
+        artifact_id = self.create_artifact_with_file(artifact_name, artifact_file_path, description, tags)
+        logger.info(f"Artifact created: {artifact_id}")
+
+        self.upload_model_files_to_artifact(artifact_id, model_directory)
 
         return artifact_id
 
