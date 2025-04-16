@@ -1,7 +1,7 @@
 from typing import List
 import logging
 from requests.exceptions import RequestException
-
+import json
 from ._http_client import HTTPClient
 from ._iam_client import IAMClient
 from ._decorator import handle_refresh_token
@@ -83,7 +83,7 @@ class ArtifactClient:
             return None
 
     @handle_refresh_token
-    def create_artifact_from_template(self, artifact_template_id: str, env_parameters: Optional[dict[str, str]] = None) -> Optional[CreateArtifactFromTemplateResponse]:
+    def create_artifact_from_template(self, artifact_template_id: str) -> Optional[CreateArtifactFromTemplateResponse]:
         """
         Creates a new artifact in the service.
 
@@ -91,15 +91,10 @@ class ArtifactClient:
         :return: The response object containing the created artifact details or None if an error occurs.
         """
         try:
-            payload = {
-                "artifact_template_id": artifact_template_id
-            }
-            if env_parameters:
-                payload["env_parameters"] = [EnvParameter(key=k, value=v) for k, v in env_parameters.items()]
             response = self.client.post(
                 "/create_artifact_from_template",
                 self.iam_client.get_custom_headers(),
-                payload
+                {"artifact_template_id": artifact_template_id}
             )
             return CreateArtifactFromTemplateResponse.model_validate(response) if response else None
         except (RequestException, ValueError) as e:
@@ -124,6 +119,39 @@ class ArtifactClient:
         except (RequestException, ValueError) as e:
             logger.error(f"Failed to rebuild artifact {artifact_id}: {e}")
             return None
+
+    @handle_refresh_token
+    def add_env_parameters_to_artifact(self, artifact_id: str, env_parameters: dict[str, str]) -> None:
+        """
+        Updates an artifact by its ID.
+
+        :param artifact_id: The ID of the artifact to update.
+        :param request: The request object containing the updated artifact details.
+        """
+        try:
+            old_artifact = self.get_artifact(artifact_id)
+            if not old_artifact:
+                logger.error(f"Artifact {artifact_id} not found")
+                return
+            request = UpdateArtifactRequestBody(
+                artifact_description=old_artifact.artifact_metadata.artifact_description,
+                artifact_name=old_artifact.artifact_metadata.artifact_name,
+                artifact_tags=old_artifact.artifact_metadata.artifact_tags,
+                env_parameters=old_artifact.artifact_parameters.env_parameters,
+                model_parameters=old_artifact.artifact_parameters.model_parameters
+            )
+            new_env_parameters = [EnvParameter(key=k, value=v) for k, v in env_parameters.items()]
+            if not request.env_parameters:
+                request.env_parameters = []
+            request.env_parameters.extend(new_env_parameters)
+            response = self.client.put(
+                f"/update_artifact?artifact_id={artifact_id}",
+                self.iam_client.get_custom_headers(),
+                request.model_dump()
+            )
+        except (RequestException, ValueError) as e:
+            logger.error(f"Failed to add env parameters to artifact {artifact_id}: {e}")
+            return 
 
     @handle_refresh_token
     def delete_artifact(self, artifact_id: str) -> Optional[DeleteArtifactResponse]:

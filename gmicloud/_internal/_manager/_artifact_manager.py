@@ -3,7 +3,7 @@ import time
 from typing import List
 import mimetypes
 import concurrent.futures
-from sympy import re
+import re
 from tqdm import tqdm
 from tqdm.contrib.logging import logging_redirect_tqdm
 
@@ -89,9 +89,13 @@ class ArtifactManager:
         if not artifact_template_id or not artifact_template_id.strip():
             raise ValueError("Artifact template ID is required and cannot be empty.")
 
-        resp = self.artifact_client.create_artifact_from_template(artifact_template_id, env_parameters)
+    
+        resp = self.artifact_client.create_artifact_from_template(artifact_template_id)
         if not resp or not resp.artifact_id:
             raise ValueError("Failed to create artifact from template.")
+
+        if env_parameters:
+            self.artifact_client.add_env_parameters_to_artifact(resp.artifact_id, env_parameters)
 
         return resp.artifact_id
     
@@ -161,7 +165,7 @@ class ArtifactManager:
         if not template_id:
             raise ValueError(f"Template with name {artifact_template_name} not found.")
         
-        if "SERVE_COMMAND" not in env_parameters:
+        if not env_parameters or "SERVE_COMMAND" not in env_parameters:
             resources_template = template.template_data.resources
             recommended_replica_resources = ReplicaResource(
                 cpu=resources_template.cpu,

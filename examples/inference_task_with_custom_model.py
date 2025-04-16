@@ -29,13 +29,14 @@ templates = cli.artifact_manager.list_public_template_names()
 print(f"Found {len(templates)} templates: {templates}")
 
 # Create an artifact from a template
-picked_template_name = "GMI_inference_template"
-serve_command = "VLLM_USE_V1=1 python3 -m sglang.launch_server --model /mnt/fast-disks/nfs/yijie/ds_r1_hf_fp4_path --trust-remote-code --tp 8"
+# picked_template_name = "GMI_inference_template"
+picked_template_name = "DeepSeek-R1-Distill-Qwen-1.5B"
+serve_command = "VLLM_USE_V1=1 python3 -m sglang.launch_server --model /mnt/fast-disks/nfs/yijie/ds_r1_hf_fp4_path --trust-remote-code --tp 1"
 
 artifact_id, recommended_replica_resources = cli.artifact_manager.create_artifact_from_template_name(
     artifact_template_name=picked_template_name,
     env_parameters={
-        "SERVE_COMMAND": model_checkpoint_save_dir,
+        "SERVE_COMMAND": serve_command,
         "GPU_TYPE": "H100",
     }
 )
@@ -44,6 +45,7 @@ print(f"Created artifact {artifact_id}")
 # Upload model files to artifact
 cli.artifact_manager.upload_model_files_to_artifact(artifact_id, model_checkpoint_save_dir)
 
+print(55555555 ,recommended_replica_resources)
 # Create Task based on Artifact
 new_task = Task(
     config=TaskConfig(
