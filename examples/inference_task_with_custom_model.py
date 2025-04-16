@@ -30,7 +30,7 @@ print(f"Found {len(templates)} templates: {templates}")
 
 # Create an artifact from a template
 # picked_template_name = "GMI_inference_template"
-picked_template_name = "v1.3.1-template_tot"
+picked_template_name = "GMI_SGLang_0.4.5_template"
 serve_command = "python3 -m sglang.launch_server --model deepseek-ai/DeepSeek-R1-Distill-Qwen-1.5B --trust-remote-code --mem-fraction-static 0.8 --tp 1"
 
 artifact_id, recommended_replica_resources = cli.artifact_manager.create_artifact_from_template_name(
@@ -40,12 +40,11 @@ artifact_id, recommended_replica_resources = cli.artifact_manager.create_artifac
         "GPU_TYPE": "H100",
     }
 )
-print(f"Created artifact {artifact_id}")
+print(f"Created artifact {artifact_id} with recommended resources: {recommended_replica_resources}")
 
 # Upload model files to artifact
 cli.artifact_manager.upload_model_files_to_artifact(artifact_id, model_checkpoint_save_dir)
 
-print(55555555 ,recommended_replica_resources)
 # Create Task based on Artifact
 new_task = Task(
     config=TaskConfig(
