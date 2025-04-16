@@ -30,13 +30,13 @@ print(f"Found {len(templates)} templates: {templates}")
 
 # Create an artifact from a template
 # picked_template_name = "GMI_inference_template"
-picked_template_name = "DeepSeek-R1-Distill-Qwen-1.5B"
-serve_command = "VLLM_USE_V1=1 python3 -m sglang.launch_server --model /mnt/fast-disks/nfs/yijie/ds_r1_hf_fp4_path --trust-remote-code --tp 1"
+picked_template_name = "v1.3.1-template_tot"
+serve_command = "python3 -m sglang.launch_server --model deepseek-ai/DeepSeek-R1-Distill-Qwen-1.5B --trust-remote-code --mem-fraction-static 0.8 --tp 1"
 
 artifact_id, recommended_replica_resources = cli.artifact_manager.create_artifact_from_template_name(
     artifact_template_name=picked_template_name,
     env_parameters={
-        "SERVE_COMMAND": serve_command,
+        "SERVER_COMMAND": serve_command,
         "GPU_TYPE": "H100",
     }
 )
