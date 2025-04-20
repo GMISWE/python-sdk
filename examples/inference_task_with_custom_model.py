@@ -1,6 +1,7 @@
 from datetime import datetime
 import os
 import sys
+import time
 from huggingface_hub import snapshot_download  # Added to download model programmatically
 
 # To allow this script to be executed from other directories
@@ -13,6 +14,7 @@ from examples.completion import call_chat_completion
 # Download model from huggingface
 from huggingface_hub import snapshot_download
 
+# model_name = "AuriAetherwiing/MN-12B-Starcannon-v2"
 model_name = "deepseek-ai/DeepSeek-R1-Distill-Qwen-1.5B"
 model_checkpoint_save_dir = "files/model_garden"
 snapshot_download(repo_id=model_name, local_dir=model_checkpoint_save_dir)
@@ -32,14 +34,14 @@ print(f"Found {len(templates)} templates: {templates}")
 # picked_template_name = "GMI_inference_template"
 
 # Example for vllm server
-# picked_template_name = "vllm_0.8.4_test10"
-# serve_command = "vllm serve deepseek-ai/DeepSeek-R1-Distill-Qwen-1.5B --trust-remote-code --gpu-memory-utilization 0.8"
+picked_template_name = "gmi_vllm_0.8.4"
+serve_command = "VLLM_USE_V1=1 vllm serve deepseek-ai/DeepSeek-R1-Distill-Qwen-1.5B --trust-remote-code --gpu-memory-utilization 0.8 -dp 2 -tp 2 --enable-chunked-prefill"
 
 # Example for sglang server
-picked_template_name = "SGLang_0.4.5_test7"
-serve_command = "python3 -m sglang.launch_server --model-path deepseek-ai/DeepSeek-R1-Distill-Qwen-1.5B --trust-remote-code --mem-fraction-static 0.8"
-artifact_name = "artifact_sglang_hello_world"
+# picked_template_name = "gmi_sglang_0.4.5.post1"
+# serve_command = "python3 -m sglang.launch_server --model-path deepseek-ai/DeepSeek-R1-Distill-Qwen-1.5B --trust-remote-code --tp-size 2 --mem-fraction-static 0.8 --enable-torch-compile"
 
+artifact_name = "artifact_hello_world"
 artifact_id, recommended_replica_resources = cli.artifact_manager.create_artifact_for_serve_command_and_custom_model(
     template_name=picked_template_name,
     artifact_name=artifact_name,
@@ -51,6 +53,9 @@ print(f"Created artifact {artifact_id} with recommended resources: {recommended_
 
 # Upload model files to artifact
 cli.artifact_manager.upload_model_files_to_artifact(artifact_id, model_checkpoint_save_dir)
+
+# Wait 10 minutes for the artifact to be ready
+time.sleep(10 * 60)
 
 # Create Task based on Artifact
 new_task = Task(

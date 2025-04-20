@@ -99,11 +99,20 @@ def parse_server_sglang_command(cmd_str: str) -> tuple[dict, dict]:
 
 def extract_gpu_num_from_serve_command(serve_args_dict: dict) -> int:
     """ extract gpu num from serve command """            
-    cmd_tp_size, cmd_dp_size = (1, 1)
-    if "tensor-parallel-size" in serve_args_dict or "tp" in serve_args_dict or "tp-size" in serve_args_dict:
-        cmd_tp_size = serve_args_dict["tensor-parallel-size"] or serve_args_dict["tp"] or serve_args_dict["tp-size"]
-    if "data-parallel-size" in serve_args_dict or "dp" in serve_args_dict or "dp-size" in serve_args_dict:
-        cmd_dp_size = serve_args_dict["data-parallel-size"] or serve_args_dict["dp"] or serve_args_dict["dp-size"]
+    cmd_tp_size = 1
+    cmd_dp_size = 1
+    if "tensor-parallel-size" in serve_args_dict:
+        cmd_tp_size = int(serve_args_dict["tensor-parallel-size"])
+    elif "tp" in serve_args_dict:
+        cmd_tp_size = int(serve_args_dict["tp"])
+    elif "tp-size" in serve_args_dict:
+        cmd_tp_size = int(serve_args_dict["tp-size"])
+    if "data-parallel-size" in serve_args_dict:
+        cmd_dp_size = int(serve_args_dict["data-parallel-size"])
+    elif "dp" in serve_args_dict:
+        cmd_dp_size = int(serve_args_dict["dp"])
+    elif "dp-size" in serve_args_dict:
+        cmd_dp_size = int(serve_args_dict["dp-size"])
     if "pipeline_parallel_size" in serve_args_dict or "pp" in serve_args_dict:
         raise ValueError("Pipeline parallel size is not supported.")
     cmd_gpu_num = cmd_tp_size * cmd_dp_size
