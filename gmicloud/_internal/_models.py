@@ -98,6 +98,8 @@ class CreateArtifactRequest(BaseModel):
     artifact_name: str  # The name of the artifact to create.
     artifact_description: Optional[str] = ""  # Description of the artifact.
     artifact_tags: Optional[List[str]] = None  # Tags for the artifact.
+    deployment_type: Optional[str] = ""  # Deployment type
+    template_id: Optional[str] = ""  # Template ID
     env_parameters: Optional[List["EnvParameter"]] = None  # Environment parameters.
     model_description: Optional[str] = ""  # Description of the model.
     model_parameters: Optional[List["ModelParameter"]] = None  # Parameters for the artifact.

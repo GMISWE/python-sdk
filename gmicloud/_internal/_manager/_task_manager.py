@@ -170,7 +170,7 @@ class TaskManager:
                 raise Exception(f"Task creation takes more than {timeout_s // 60} minutes. Testing aborted.")
             time.sleep(10)
 
-    def start_task_and_wait(self, task_id: str, timeout_s: int = 900) -> Task:
+    def start_task_and_wait(self, task_id: str, timeout_s: int = 3600) -> Task:
         """
         Start a task and wait for it to be ready.
 
@@ -200,7 +200,7 @@ class TaskManager:
         return self.task_client.stop_task(task_id)
 
         
-    def stop_task_and_wait(self, task_id: str, timeout_s: int = 900):
+    def stop_task_and_wait(self, task_id: str, timeout_s: int = 3600):
         try:
             self.stop_task(task_id)
             logger.info(f"Stopping task ID: {task_id}")

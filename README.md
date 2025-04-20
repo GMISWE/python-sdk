@@ -137,8 +137,13 @@ print(f"Found {len(templates)} templates: {templates}")
 3. Pick a template (e.g. SGLang 0.4.5) and prepare a local serve command
 
 ```python
-picked_template_name = "GMI_SGLang_0.4.5_template"
-serve_command = "python3 -m sglang.launch_server --model deepseek-ai/DeepSeek-R1-Distill-Qwen-1.5B --trust-remote-code --mem-fraction-static 0.8 --tp 1"
+# Example for vllm server
+picked_template_name = "gmi_vllm_0.8.4"
+serve_command = "vllm serve deepseek-ai/DeepSeek-R1-Distill-Qwen-1.5B --trust-remote-code --gpu-memory-utilization 0.8"
+
+# Example for sglang server
+picked_template_name = "gmi_sglang_0.4.5.post1"
+serve_command = "python3 -m sglang.launch_server --model-path deepseek-ai/DeepSeek-R1-Distill-Qwen-1.5B --trust-remote-code --mem-fraction-static 0.8 --tp 2"
 ```
 
 4. Create an artifact and upload custom model. The artifact can be reused to create inference tasks later. Artifact also suggests recommended resources for each inference server replica
