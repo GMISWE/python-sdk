@@ -161,7 +161,8 @@ print(f"Created artifact {artifact_id} with recommended resources: {recommended_
 # Upload model files to artifact
 cli.artifact_manager.upload_model_files_to_artifact(artifact_id, model_checkpoint_save_dir)
 
-time.sleep(10 * 60)
+# Wait for model files to be uploaded and distributed. For large models (e.g. 10B+ parameters), this may take 20+ minutes.
+time.sleep(20 * 60)
 ```
 
 5. Create Inference task (defining min/max inference replica), start and wait
