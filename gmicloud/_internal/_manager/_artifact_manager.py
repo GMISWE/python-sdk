@@ -185,10 +185,13 @@ class ArtifactManager:
             raise ValueError(f"Failed to parse serve command, Error: {e}")
 
         try:
-            env_vars = [
+            env_vars = []
+            if picked_template.template_data and picked_template.template_data.env_parameters:
+                env_vars = picked_template.template_data.env_parameters
+            env_vars.extend([
                 EnvParameter(key="SERVE_COMMAND", value=serve_command),
                 EnvParameter(key="GPU_TYPE", value=gpu_type),
-            ]
+            ])
             resp = self.create_artifact(artifact_name, artifact_description, deployment_type="template", template_id=picked_template.template_id, env_parameters=env_vars)
             # Assume Artifact is already with BuildStatus.SUCCESS status
             return resp.artifact_id, recommended_replica_resources
