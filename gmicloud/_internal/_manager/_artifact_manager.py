@@ -169,7 +169,7 @@ class ArtifactManager:
         
         try:
             if gpu_type not in ["H100", "H200"]:
-                raise ValueError("Only support A100 and H100 for now")
+                raise ValueError("Only support H100 and H200 for now")
             
             type, env_vars, serve_args_dict = parse_server_command(serve_command)
             if type.lower() not in template_name.lower():

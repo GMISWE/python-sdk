@@ -160,41 +160,33 @@ print(f"Created artifact {artifact_id} with recommended resources: {recommended_
 
 # Upload model files to artifact
 cli.artifact_manager.upload_model_files_to_artifact(artifact_id, model_checkpoint_save_dir)
+
+time.sleep(10 * 60)
 ```
 
 5. Create Inference task (defining min/max inference replica), start and wait
 
 ```python
-new_task = Task(
-    config=TaskConfig(
-        ray_task_config=RayTaskConfig(
-            artifact_id=artifact_id,
-            file_path="serve",
-            deployment_name="app",
-            replica_resource=recommended_replica_resources,
-        ),
-        task_scheduling = TaskScheduling(
-            scheduling_oneoff=OneOffScheduling(
-                trigger_timestamp=int(datetime.now().timestamp()),
-                min_replicas=1,
-                max_replicas=4,
-            )
-        ),
-    ),
-)
-task = cli.task_manager.create_task(new_task)
-task_id = task.task_id
-task = cli.task_manager.get_task(task_id)
+# Create Task based on Artifact
+new_task_id = cli.task_manager.create_task_from_artifact_id(artifact_id, recommended_replica_resources, TaskScheduling(
+    scheduling_oneoff=OneOffScheduling(
+        trigger_timestamp=int(datetime.now().timestamp()),
+        min_replicas=1,
+        max_replicas=4,
+    )
+))
+task = cli.task_manager.get_task(new_task_id)
 print(f"Task created: {task.config.task_name}. You can check details at https://inference-engine.gmicloud.ai/user-console/task")
 
 # Start Task and wait for it to be ready
-cli.task_manager.start_task_and_wait(task_id)
+cli.task_manager.start_task_and_wait(new_task_id)
 ```
 
 6. Test with sample chat completion request
 
 ```python
-print(call_chat_completion(cli, task_id))
+api_key = "<YOUR_API_KEY>"
+print(call_chat_completion(cli, api_key, new_task_id))
 ```
 
 

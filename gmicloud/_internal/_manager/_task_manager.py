@@ -65,6 +65,24 @@ class TaskManager:
 
         logger.info(f"Task created: {resp.task.task_id}")
         return resp.task
+    
+    def create_task_from_artifact_id(self, artifact_id: str, replica_resource: ReplicaResource, task_scheduling: TaskScheduling) -> Task:
+        """
+        Create a new task using the configuration data from a file.
+        """
+        # Create Task based on Artifact
+        new_task = Task(
+            config=TaskConfig(
+                ray_task_config=RayTaskConfig(
+                    artifact_id=artifact_id,
+                    file_path="serve",
+                    deployment_name="app",
+                    replica_resource=replica_resource,
+                ),
+                task_scheduling = task_scheduling,
+            ),
+        )
+        return self.create_task(new_task).task_id
 
     def create_task_from_file(self, artifact_id: str, config_file_path: str, trigger_timestamp: int = None) -> Task:
         """
