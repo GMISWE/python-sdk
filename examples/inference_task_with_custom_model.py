@@ -36,7 +36,6 @@ print(f"Found {len(templates)} templates: {templates}")
 # Example for vllm server
 picked_template_name = "gmi_vllm_0.8.4"
 serve_command = "VLLM_USE_V1=1 vllm serve deepseek-ai/DeepSeek-R1-Distill-Qwen-1.5B --trust-remote-code --gpu-memory-utilization 0.8 -dp 2 -tp 2 --enable-chunked-prefill"
-
 # Example for sglang server
 # picked_template_name = "gmi_sglang_0.4.5.post1"
 # serve_command = "python3 -m sglang.launch_server --model-path deepseek-ai/DeepSeek-R1-Distill-Qwen-1.5B --trust-remote-code --tp-size 2 --mem-fraction-static 0.8 --enable-torch-compile"
@@ -84,4 +83,5 @@ print(f"Task created: {task.config.task_name}. You can check details at https://
 cli.task_manager.start_task_and_wait(task_id)
 
 # Call chat completion
-print(call_chat_completion(cli, task_id))
+api_key = "<YOUR_API_KEY>"
+print(call_chat_completion(cli, api_key, task_id))
