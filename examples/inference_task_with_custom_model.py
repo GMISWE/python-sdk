@@ -16,7 +16,7 @@ from huggingface_hub import snapshot_download
 
 # model_name = "AuriAetherwiing/MN-12B-Starcannon-v2"
 model_name = "deepseek-ai/DeepSeek-R1-Distill-Qwen-1.5B"
-model_checkpoint_save_dir = "files/model_garden"
+model_checkpoint_save_dir = f"files/model_garden/{model_name}"
 snapshot_download(repo_id=model_name, local_dir=model_checkpoint_save_dir)
 
 

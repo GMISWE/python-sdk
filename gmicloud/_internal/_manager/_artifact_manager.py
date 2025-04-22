@@ -335,6 +335,9 @@ class ArtifactManager:
         # List all files in the model directory recursively
         model_file_paths = []
         for root, _, files in os.walk(model_directory):
+            # Skip .cache folder
+            if '.cache' in root.split(os.path.sep):
+                continue
             for file in files:
                 model_file_paths.append(os.path.join(root, file))
 
