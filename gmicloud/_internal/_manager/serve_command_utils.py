@@ -39,18 +39,21 @@ def parse_flags_and_args(tokens: list) -> dict:
     i = 0
     while i < len(tokens):
         token = tokens[i]
-        if token.startswith('--'):
+        if token.startswith('--') or token.startswith('-'):
             if '=' in token:
                 key, value = token[2:].split('=', 1)
                 result[key] = value.strip("'\"")
             elif i + 1 < len(tokens) and not tokens[i + 1].startswith('--'):
-                result[token[2:]] = tokens[i + 1].strip("'\"")
-                i += 1
-            elif i + 1 < len(tokens) and not tokens[i + 1].startswith('-'):
-                result[token[1:]] = tokens[i + 1].strip("'\"")
+                if token.startswith('--'):
+                    result[token[2:]] = tokens[i + 1].strip("'\"")
+                else:
+                    result[token[1:]] = tokens[i + 1].strip("'\"")
                 i += 1
             else:
-                result[token[2:]] = True
+                if token.startswith('--'):
+                    result[token[2:]] = True
+                else:
+                    result[token[1:]] = True
         else:
             logger.warning(f"Ignoring unknown token: {token}")
         i += 1
@@ -118,4 +121,5 @@ def extract_gpu_num_from_serve_command(serve_args_dict: dict) -> int:
     cmd_gpu_num = cmd_tp_size * cmd_dp_size
     if cmd_gpu_num > 8:
         raise ValueError("Only support up to 8 GPUs for single task replica.")
+    print(f'cmd_tp_size: {cmd_tp_size}, cmd_dp_size: {cmd_dp_size}, cmd_gpu_num: {cmd_gpu_num}')
     return cmd_gpu_num
