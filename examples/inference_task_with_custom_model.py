@@ -35,7 +35,7 @@ print(f"Found {len(templates)} templates: {templates}")
 
 # Example for vllm server
 picked_template_name = "gmi_vllm_0.8.4"
-serve_command = "VLLM_USE_V1=1 vllm serve deepseek-ai/DeepSeek-R1-Distill-Qwen-1.5B --trust-remote-code --gpu-memory-utilization 0.8 --data-parallel-size 2 -tp 2 --enable-chunked-prefill"
+serve_command = "vllm serve deepseek-ai/DeepSeek-R1-Distill-Qwen-1.5B --trust-remote-code --gpu-memory-utilization 0.8 --data-parallel-size 1 -tp 1 --enable-chunked-prefill --max_model_len 8192"
 # Example for sglang server
 # picked_template_name = "gmi_sglang_0.4.5.post1"
 # serve_command = "python3 -m sglang.launch_server --model-path deepseek-ai/DeepSeek-R1-Distill-Qwen-1.5B --trust-remote-code --tp-size 2 --mem-fraction-static 0.8 --enable-torch-compile"
@@ -53,8 +53,9 @@ print(f"Created artifact {artifact_id} with recommended resources: {recommended_
 # Upload model files to artifact
 cli.artifact_manager.upload_model_files_to_artifact(artifact_id, model_checkpoint_save_dir)
 
-# Wait 10 minutes for the artifact to be ready
-time.sleep(10 * 60)
+# Maybe Wait 10 minutes for the artifact to be ready
+# time.sleep(10 * 60)
+
 
 # Create Task based on Artifact
 new_task_id = cli.task_manager.create_task_from_artifact_id(artifact_id, recommended_replica_resources, TaskScheduling(
@@ -74,3 +75,4 @@ cli.task_manager.start_task_and_wait(new_task_id)
 # Call chat completion
 api_key = "<YOUR_API_KEY>"
 print(call_chat_completion(cli, api_key, new_task_id))
+
