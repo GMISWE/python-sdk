@@ -52,7 +52,7 @@ class ArtifactClient:
         """
         Fetches all artifacts.
 
-        :return: A list of Artifact objects. If an error occurs, returns an empty list.
+        :return: A list of GetAllArtifactsWithEndpointsResponse objects. If an error occurs, returns an empty list.
         """
         try:
             response = self.client.get("/get_all_artifacts", self.iam_client.get_custom_headers())

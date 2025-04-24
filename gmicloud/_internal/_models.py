@@ -100,7 +100,10 @@ class CreateArtifactRequest(BaseModel):
     env_parameters: Optional[List["EnvParameter"]] = None  # Environment parameters.
     model_description: Optional[str] = ""  # Description of the model.
     model_parameters: Optional[List["ModelParameter"]] = None  # Parameters for the artifact.
-
+    artifact_volume_path: Optional[str] = ""  # Path to the volume where the artifact is stored.
+    deployment_type: Optional[str] = ""  # Type of deployment (e.g., Ray, Kubernetes).
+    need_update_icon: Optional[bool] = False  # Whether to update the artifact icon.
+    template_id: Optional[str] = ""  # ID of the template used to create the artifact.
 
 class CreateArtifactResponse(BaseModel):
     """

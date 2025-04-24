@@ -47,7 +47,7 @@ class ArtifactManager:
 
     def get_all_artifacts(self) -> List[GetAllArtifactsWithEndpointsResponse]:
         """
-        Retrieve all artifacts for a given user.
+        Fetches all artifacts.
 
         :return: A list of GetAllArtifactsWithEndpointsResponse objects associated with the user.
         :rtype: List[GetAllArtifactsWithEndpointsResponse]
@@ -56,20 +56,20 @@ class ArtifactManager:
 
     def get_public_artifact(self, artifact_id: str)-> GetPublicArtifactsResponse:
         """
-        Retrieve all public artifacts.
+        Fetches a public artifact by its ID.
 
-        :return: A list of Artifact objects that are public.
-        :rtype: List[Artifact]
+        :param artifact_id: The ID of the public artifact to fetch.
+        :return: The public artifact object or None if an error occurs.
+        :rtype: GetPublicArtifactsResponse
         """
         return self.artifact_client.get_public_artifact(artifact_id)
 
     def get_public_artifacts(self) -> List[GetPublicArtifactsResponse]:
         """
-        Retrieve all public artifacts with a given name.
+        Retrieve all public artifacts.
 
-        :param artifact_name: The name of the artifact to retrieve.
-        :return: A list of Artifact objects that are public and have the given name.
-        :rtype: List[Artifact]
+        :return: A list of GetPublicArtifactsResponse objects that are public and have the given name.
+        :rtype: List[GetPublicArtifactsResponse]
         :raises ValueError: If `artifact_name` is None or empty.
         """
         return self.artifact_client.get_public_artifacts()
