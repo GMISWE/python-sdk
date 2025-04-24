@@ -65,6 +65,24 @@ class TaskManager:
 
         logger.info(f"Task created: {resp.task.task_id}")
         return resp.task
+    
+    def create_task_from_artifact_id(self, artifact_id: str, replica_resource: ReplicaResource, task_scheduling: TaskScheduling) -> Task:
+        """
+        Create a new task using the configuration data from a file.
+        """
+        # Create Task based on Artifact
+        new_task = Task(
+            config=TaskConfig(
+                ray_task_config=RayTaskConfig(
+                    artifact_id=artifact_id,
+                    file_path="serve",
+                    deployment_name="app",
+                    replica_resource=replica_resource,
+                ),
+                task_scheduling = task_scheduling,
+            ),
+        )
+        return self.create_task(new_task).task_id
 
     def create_task_from_file(self, artifact_id: str, config_file_path: str, trigger_timestamp: int = None) -> Task:
         """
@@ -170,7 +188,7 @@ class TaskManager:
                 raise Exception(f"Task creation takes more than {timeout_s // 60} minutes. Testing aborted.")
             time.sleep(10)
 
-    def start_task_and_wait(self, task_id: str, timeout_s: int = 900) -> Task:
+    def start_task_and_wait(self, task_id: str, timeout_s: int = 3600) -> Task:
         """
         Start a task and wait for it to be ready.
 
@@ -200,7 +218,7 @@ class TaskManager:
         return self.task_client.stop_task(task_id)
 
         
-    def stop_task_and_wait(self, task_id: str, timeout_s: int = 900):
+    def stop_task_and_wait(self, task_id: str, timeout_s: int = 3600):
         try:
             self.stop_task(task_id)
             logger.info(f"Stopping task ID: {task_id}")

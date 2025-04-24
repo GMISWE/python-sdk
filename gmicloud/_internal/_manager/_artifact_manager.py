@@ -3,6 +3,7 @@ import time
 from typing import List
 import mimetypes
 import concurrent.futures
+import re
 from tqdm import tqdm
 from tqdm.contrib.logging import logging_redirect_tqdm
 
@@ -10,6 +11,7 @@ from .._client._iam_client import IAMClient
 from .._client._artifact_client import ArtifactClient
 from .._client._file_upload_client import FileUploadClient
 from .._models import *
+from .._manager.serve_command_utils import parse_server_command, extract_gpu_num_from_serve_command
 
 import logging
 
@@ -56,7 +58,12 @@ class ArtifactManager:
             self,
             artifact_name: str,
             description: Optional[str] = "",
-            tags: Optional[List[str]] = None
+            tags: Optional[List[str]] = None,
+            deployment_type: Optional[str] = "",
+            template_id: Optional[str] = "",
+            env_parameters: Optional[List["EnvParameter"]] = None,
+            model_description: Optional[str] = "",
+            model_parameters: Optional[List["ModelParameter"]] = None,
     ) -> CreateArtifactResponse:
         """
         Create a new artifact for a user.
@@ -72,11 +79,16 @@ class ArtifactManager:
 
         req = CreateArtifactRequest(artifact_name=artifact_name,
                                     artifact_description=description,
-                                    artifact_tags=tags, )
+                                    artifact_tags=tags,
+                                    deployment_type=deployment_type,
+                                    template_id=template_id,
+                                    env_parameters=env_parameters,
+                                    model_description=model_description,
+                                    model_parameters=model_parameters)
 
         return self.artifact_client.create_artifact(req)
 
-    def create_artifact_from_template(self, artifact_template_id: str) -> str:
+    def create_artifact_from_template(self, artifact_template_id: str, env_parameters: Optional[dict[str, str]] = None) -> str:
         """
         Create a new artifact for a user using a template.
 
@@ -88,11 +100,16 @@ class ArtifactManager:
         if not artifact_template_id or not artifact_template_id.strip():
             raise ValueError("Artifact template ID is required and cannot be empty.")
 
+    
         resp = self.artifact_client.create_artifact_from_template(artifact_template_id)
         if not resp or not resp.artifact_id:
             raise ValueError("Failed to create artifact from template.")
 
+        if env_parameters:
+            self.artifact_client.add_env_parameters_to_artifact(resp.artifact_id, env_parameters)
+
         return resp.artifact_id
+
     
     def create_artifact_from_template_name(self, artifact_template_name: str) -> tuple[str, ReplicaResource]:
         """
@@ -125,6 +142,59 @@ class ArtifactManager:
             artifact_id = self.create_artifact_from_template(template_id)
             self.wait_for_artifact_ready(artifact_id)
             return artifact_id, recommended_replica_resources
+        except Exception as e:
+            logger.error(f"Failed to create artifact from template, Error: {e}")
+            raise e
+        
+    def create_artifact_for_serve_command_and_custom_model(self, template_name: str, artifact_name: str, serve_command: str, gpu_type: str, artifact_description: str = "") -> tuple[str, ReplicaResource]:
+        """
+        Create an artifact from a template and support custom model.
+        :param artifact_template_name: The name of the template to use.
+        :return: A tuple containing the artifact ID and the recommended replica resources.
+        :rtype: tuple[str, ReplicaResource]
+        """
+
+        recommended_replica_resources = None
+        picked_template = None
+        try:
+            templates = self.get_public_templates()
+        except Exception as e:
+            logger.error(f"Failed to get artifact templates, Error: {e}")
+        for template in templates:
+            if template.template_data and template.template_data.name == template_name:
+                picked_template = template
+                break
+        if not picked_template:
+            raise ValueError(f"Template with name {template_name} not found.")
+        
+        try:
+            if gpu_type not in ["H100", "H200"]:
+                raise ValueError("Only support H100 and H200 for now")
+            
+            type, env_vars, serve_args_dict = parse_server_command(serve_command)
+            if type.lower() not in template_name.lower():
+                raise ValueError(f"Template {template_name} does not support inference with {type}.")
+            num_gpus = extract_gpu_num_from_serve_command(serve_args_dict)
+            recommended_replica_resources = ReplicaResource(
+                cpu=num_gpus * 16,
+                ram_gb=num_gpus * 100,
+                gpu=num_gpus,
+                gpu_name=gpu_type,
+            )
+        except Exception as e:
+            raise ValueError(f"Failed to parse serve command, Error: {e}")
+
+        try:
+            env_vars = []
+            if picked_template.template_data and picked_template.template_data.env_parameters:
+                env_vars = picked_template.template_data.env_parameters
+            env_vars.extend([
+                EnvParameter(key="SERVE_COMMAND", value=serve_command),
+                EnvParameter(key="GPU_TYPE", value=gpu_type),
+            ])
+            resp = self.create_artifact(artifact_name, artifact_description, deployment_type="template", template_id=picked_template.template_id, env_parameters=env_vars)
+            # Assume Artifact is already with BuildStatus.SUCCESS status
+            return resp.artifact_id, recommended_replica_resources
         except Exception as e:
             logger.error(f"Failed to create artifact from template, Error: {e}")
             raise e
@@ -254,29 +324,20 @@ class ArtifactManager:
         FileUploadClient.upload_large_file(upload_link, file_path)
 
 
-    def create_artifact_with_model_files(
-            self,
-            artifact_name: str,
-            artifact_file_path: str,
-            model_directory: str,
-            description: Optional[str] = "",
-            tags: Optional[str] = None
-    ) -> str:
+    def upload_model_files_to_artifact(self, artifact_id: str, model_directory: str) -> None:
         """
-        Create a new artifact for a user and upload model files associated with the artifact.
-        :param artifact_name: The name of the artifact.
-        :param artifact_file_path: The path to the artifact file(Dockerfile+serve.py).
+        Upload model files to an existing artifact.
+
+        :param artifact_id: The ID of the artifact to upload the model files to.
         :param model_directory: The path to the model directory.
-        :param description: An optional description for the artifact.
-        :param tags: Optional tags associated with the artifact, as a comma-separated string.
-        :return: The `artifact_id` of the created artifact.
         """
-        artifact_id = self.create_artifact_with_file(artifact_name, artifact_file_path, description, tags)
-        logger.info(f"Artifact created: {artifact_id}")
 
         # List all files in the model directory recursively
         model_file_paths = []
         for root, _, files in os.walk(model_directory):
+            # Skip .cache folder
+            if '.cache' in root.split(os.path.sep):
+                continue
             for file in files:
                 model_file_paths.append(os.path.join(root, file))
 
@@ -298,6 +359,28 @@ class ArtifactManager:
                         except Exception as e:
                             logger.error(f"Failed to upload file {futures[future]}, Error: {e}")
                         progress_bar.update(1)
+
+    def create_artifact_with_model_files(
+            self,
+            artifact_name: str,
+            artifact_file_path: str,
+            model_directory: str,
+            description: Optional[str] = "",
+            tags: Optional[str] = None
+    ) -> str:
+        """
+        Create a new artifact for a user and upload model files associated with the artifact.
+        :param artifact_name: The name of the artifact.
+        :param artifact_file_path: The path to the artifact file(Dockerfile+serve.py).
+        :param model_directory: The path to the model directory.
+        :param description: An optional description for the artifact.
+        :param tags: Optional tags associated with the artifact, as a comma-separated string.
+        :return: The `artifact_id` of the created artifact.
+        """
+        artifact_id = self.create_artifact_with_file(artifact_name, artifact_file_path, description, tags)
+        logger.info(f"Artifact created: {artifact_id}")
+
+        self.upload_model_files_to_artifact(artifact_id, model_directory)
 
         return artifact_id
 

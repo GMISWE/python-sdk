@@ -9,7 +9,7 @@ from openai import OpenAI
 logger = logging.getLogger(__name__)
 
 
-def call_chat_completion(client: Client, task_id: str) -> str:
+def call_chat_completion(client: Client, api_key: str, task_id: str) -> str:
     task_manager = client.task_manager
     try:
         task = task_manager.get_task(task_id)
@@ -33,17 +33,8 @@ def call_chat_completion(client: Client, task_id: str) -> str:
     if endpoint_url == "":
         raise Exception("No endpoint url found")
 
-    iam_manager = client.iam_manager
-    api_key = ""
-    keys = iam_manager.get_org_api_keys()
-    if len(keys) == 0:
-        logger.info("No API keys found. Creating a new one.")
-        api_key = iam_manager.create_org_api_key("example_api_key")
-    else:
-        api_key = keys[0].partialKey
-
     open_ai = OpenAI(
-        base_url=os.getenv("OPENAI_API_BASE", f"http://{endpoint_url}/serve/v1/"),
+        base_url=os.getenv("OPENAI_API_BASE", f"https://{endpoint_url}/serve/v1/"),
         api_key=api_key
     )
     # Make a chat completion request using the new OpenAI client.
