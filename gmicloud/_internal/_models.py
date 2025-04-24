@@ -80,7 +80,6 @@ class Artifact(BaseModel):
     build_status: Optional[BuildStatus] = None  # Status of the artifact build (e.g., in progress, succeeded, failed).
     artifact_data: Optional[ArtifactData] = None  # Data associated with the artifact.
     artifact_metadata: Optional[ArtifactMetadata] = None  # Metadata describing the artifact.
-    artifact_parameters: Optional[ArtifactParameters] = None  # Parameters for the artifact.
     big_files_metadata: Optional[List[BigFileMetadata]] = None  # Metadata for large files associated with the artifact.
 
 
@@ -98,8 +97,6 @@ class CreateArtifactRequest(BaseModel):
     artifact_name: str  # The name of the artifact to create.
     artifact_description: Optional[str] = ""  # Description of the artifact.
     artifact_tags: Optional[List[str]] = None  # Tags for the artifact.
-    deployment_type: Optional[str] = ""  # Deployment type
-    template_id: Optional[str] = ""  # Template ID
     env_parameters: Optional[List["EnvParameter"]] = None  # Environment parameters.
     model_description: Optional[str] = ""  # Description of the model.
     model_parameters: Optional[List["ModelParameter"]] = None  # Parameters for the artifact.
@@ -204,6 +201,7 @@ class UpdateArtifactRequestBody(BaseModel):
     model_description: Optional[str] = ""  # Description of the model.
     model_parameters: Optional[List["ModelParameter"]] = None  # Parameters for the artifact.
     need_update_icon: Optional[bool] = False  # Whether to update the artifact icon.
+    model_config = { "extra": "forbid" }
 
 
 class UpdateArtifactResponse(BaseModel):
@@ -284,6 +282,7 @@ class TemplateData(BaseModel):
     tags: Optional[List[str]] = None  # Tags associated with the artifact template.
     volume_path: Optional[str] = ""  # Path to the volume where the artifact is stored.
     env_parameters: Optional[List["EnvParameter"]] = None  # Added missing field
+    model_description: Optional[str] = ""  # Added missing field
 
 
 class ModelParameter(BaseModel):
@@ -315,9 +314,7 @@ class CreateArtifactFromTemplateRequest(BaseModel):
     """
     Request object to create a new artifact from a template.
     """
-    # user_id: str  # The user ID creating the artifact.
     artifact_template_id: str  # The ID of the artifact template to use.
-    env_parameters: Optional[List["EnvParameter"]] = None  # Environment parameters.
 
 
 class CreateArtifactFromTemplateResponse(BaseModel):
