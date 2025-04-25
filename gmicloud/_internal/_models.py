@@ -103,6 +103,7 @@ class CreateArtifactRequest(BaseModel):
     env_parameters: Optional[List["EnvParameter"]] = None  # Environment parameters.
     model_description: Optional[str] = ""  # Description of the model.
     model_parameters: Optional[List["ModelParameter"]] = None  # Parameters for the artifact.
+    artifact_volume_path: Optional[str] = ""  # Path to the volume where the artifact is stored.
 
 
 class CreateArtifactResponse(BaseModel):

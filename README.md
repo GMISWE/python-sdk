@@ -121,7 +121,22 @@ model_checkpoint_save_dir = "files/model_garden"
 snapshot_download(repo_id=model_name, local_dir=model_checkpoint_save_dir)
 ```
 
-2. Find a template of specific SGLang version
+#### Pre-downloaded models
+```
+"deepseek-ai/DeepSeek-R1"
+"deepseek-ai/DeepSeek-V3-0324"
+"deepseek-ai/DeepSeek-R1-Distill-Llama-70B"
+"deepseek-ai/DeepSeek-R1-Distill-Llama-8B"
+"deepseek-ai/DeepSeek-R1-Distill-Qwen-14B"
+"deepseek-ai/DeepSeek-R1-Distill-Qwen-32B"
+"deepseek-ai/DeepSeek-R1-Distill-Qwen-7B"
+"meta-llama/Llama-3.3-70B-Instruct"
+"meta-llama/Llama-4-Maverick-17B-128E-Instruct"
+"meta-llama/Llama-4-Scout-17B-16E-Instruct"
+"Qwen/QwQ-32B"
+```
+
+2. Find a template of specific vllm or SGLang version
 
 ```python
 # export GMI_CLOUD_CLIENT_ID=<YOUR_CLIENT_ID>
@@ -146,23 +161,27 @@ picked_template_name = "gmi_sglang_0.4.5.post1"
 serve_command = "python3 -m sglang.launch_server --model-path deepseek-ai/DeepSeek-R1-Distill-Qwen-1.5B --trust-remote-code --mem-fraction-static 0.8 --tp 2"
 ```
 
-4. Create an artifact and upload custom model. The artifact can be reused to create inference tasks later. Artifact also suggests recommended resources for each inference server replica
+4. Create an artifact. you can pass `pre_download_model` parameter. If you want custom model, upload model checkpoint to the artifactThe artifact can be reused to create inference tasks later. Artifact also suggests recommended resources for each inference server replica
 
 ```python
-artifact_id, recommended_replica_resources = cli.artifact_manager.create_artifact_from_template_name(
-    artifact_template_name=picked_template_name,
-    env_parameters={
-        "SERVER_COMMAND": serve_command,
-        "GPU_TYPE": "H100",
-    }
+artifact_name = "artifact_hello_world"
+artifact_id, recommended_replica_resources = cli.artifact_manager.create_artifact_for_serve_command_and_custom_model(
+    template_name=picked_template_name,
+    artifact_name=artifact_name,
+    serve_command=serve_command,
+    gpu_type="H100",
+    artifact_description="This is a test artifact",
+    pre_download_model=pick_pre_downloaded_model,
 )
 print(f"Created artifact {artifact_id} with recommended resources: {recommended_replica_resources}")
+```
 
-# Upload model files to artifact
+Alternatively, Upload a custom model checkpoint to artifact
+```python
 cli.artifact_manager.upload_model_files_to_artifact(artifact_id, model_checkpoint_save_dir)
 
-# Wait for model files to be uploaded and distributed. For large models (e.g. 10B+ parameters), this may take 20+ minutes.
-time.sleep(20 * 60)
+# Maybe Wait 10 minutes for the artifact to be ready
+time.sleep(10 * 60)
 ```
 
 5. Create Inference task (defining min/max inference replica), start and wait
@@ -183,11 +202,26 @@ print(f"Task created: {task.config.task_name}. You can check details at https://
 cli.task_manager.start_task_and_wait(new_task_id)
 ```
 
-6. Test with sample chat completion request
+6. Test with sample chat completion request with OpenAI client
 
 ```python
-api_key = "<YOUR_API_KEY>"
-print(call_chat_completion(cli, api_key, new_task_id))
+pi_key = "<YOUR_API_KEY>"
+endpoint_url = cli.task_manager.get_task_endpoint_url(new_task_id)
+open_ai = OpenAI(
+    base_url=os.getenv("OPENAI_API_BASE", f"https://{endpoint_url}/serve/v1/"),
+    api_key=api_key
+)
+# Make a chat completion request using the new OpenAI client.
+completion = open_ai.chat.completions.create(
+    model=picked_template_name,
+    messages=[
+        {"role": "system", "content": "You are a helpful assistant."},
+        {"role": "user", "content": "Who are you?"},
+    ],
+    max_tokens=500,
+    temperature=0.7
+)
+print(completion.choices[0].message.content)
 ```
 
 

@@ -64,6 +64,7 @@ class ArtifactManager:
             env_parameters: Optional[List["EnvParameter"]] = None,
             model_description: Optional[str] = "",
             model_parameters: Optional[List["ModelParameter"]] = None,
+            artifact_volume_path: Optional[str] = "",
     ) -> CreateArtifactResponse:
         """
         Create a new artifact for a user.
@@ -84,7 +85,8 @@ class ArtifactManager:
                                     template_id=template_id,
                                     env_parameters=env_parameters,
                                     model_description=model_description,
-                                    model_parameters=model_parameters)
+                                    model_parameters=model_parameters,
+                                    artifact_volume_path=artifact_volume_path)
 
         return self.artifact_client.create_artifact(req)
 
@@ -146,7 +148,7 @@ class ArtifactManager:
             logger.error(f"Failed to create artifact from template, Error: {e}")
             raise e
         
-    def create_artifact_for_serve_command_and_custom_model(self, template_name: str, artifact_name: str, serve_command: str, gpu_type: str, artifact_description: str = "") -> tuple[str, ReplicaResource]:
+    def create_artifact_for_serve_command_and_custom_model(self, template_name: str, artifact_name: str, serve_command: str, gpu_type: str, artifact_description: str = "", pre_download_model: str = "") -> tuple[str, ReplicaResource]:
         """
         Create an artifact from a template and support custom model.
         :param artifact_template_name: The name of the template to use.
@@ -192,7 +194,7 @@ class ArtifactManager:
                 EnvParameter(key="SERVE_COMMAND", value=serve_command),
                 EnvParameter(key="GPU_TYPE", value=gpu_type),
             ])
-            resp = self.create_artifact(artifact_name, artifact_description, deployment_type="template", template_id=picked_template.template_id, env_parameters=env_vars)
+            resp = self.create_artifact(artifact_name, artifact_description, deployment_type="template", template_id=picked_template.template_id, env_parameters=env_vars, artifact_volume_path=f"models/{pre_download_model}")
             # Assume Artifact is already with BuildStatus.SUCCESS status
             return resp.artifact_id, recommended_replica_resources
         except Exception as e:
