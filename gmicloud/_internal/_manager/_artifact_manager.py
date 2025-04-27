@@ -474,6 +474,56 @@ class ArtifactManager:
             logger.error(f"Failed to get artifact templates, Error: {e}")
             return []
 
+    def create_storagefile_upload_url(
+            self, 
+            artifact_id: str,
+            file_name: str = "",
+            file_type: str = "" 
+        ) -> Optional[ResumableUploadLinkResponse]:
+        """
+        Create a resumable upload link for a storage file.
+        :param artifact_id : ID of the artifact for which the upload URL is requested.
+        :return: The resumable upload link response.
+        :rtype: ResumableUploadLinkResponse
+        """
+        self._validate_artifact_id(artifact_id)
+
+        request = ResumableUploadLinkRequest(
+            artifact_id=artifact_id,
+            file_name=file_name,
+            file_type=file_type
+        )
+        return self.artifact_client.create_storagefile_upload_url(request)
+
+    def get_all_storage_files(self,artifact_id: str) -> GetAllStorageFilesResponse:
+        """
+        Get all storage files.
+
+        :return: A GetAllStorageFilesResponse objects.
+        :rtype: GetAllStorageFilesResponse
+        """
+        self._validate_artifact_id(artifact_id)
+        
+        return self.artifact_client.get_all_storage_files(artifact_id)
+    
+
+    def get_all_templates_with_org(self) -> GetTemplatesResponse:
+        """
+        Get all templates with organization.
+
+        :return: A GetTemplatesResponse objects.
+        :rtype: GetTemplatesResponse
+        """
+        return self.artifact_client.get_all_templates_with_org()
+
+    def get_all_customize_templates(self) -> GetTemplatesResponse:
+        """
+        Get all customize templates.
+
+        :return: A GetTemplatesResponse objects.
+        :rtype: GetTemplatesResponse
+        """
+        return self.artifact_client.get_all_customize_templates()
 
     @staticmethod
     def _validate_file_name(file_name: str) -> None:

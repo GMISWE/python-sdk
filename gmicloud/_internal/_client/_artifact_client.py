@@ -317,3 +317,97 @@ class ArtifactClient:
         except RequestException as e:
             logger.error(f"Request to /get_public_templates failed: {e}")
             return []
+
+
+    @handle_refresh_token
+    def create_storagefile_upload_url(
+            self, 
+            request: ResumableUploadLinkRequest
+        ) -> Optional[ResumableUploadLinkResponse]:
+        """
+        Generates a upload_link URL for uploading a storage file.
+
+        :param request: The request object containing the artifact ID, file name, and file type.
+        :return: The response object containing the pre-signed URL and upload details, or None if an error occurs.
+        """
+        try:
+            response = self.client.post("/create_storagefile_upload_url",
+                                        self.iam_client.get_custom_headers(),
+                                        request.model_dump())
+
+            if not response:
+                logger.error("Empty response from /create_storagefile_upload_url")
+                return None
+
+            return ResumableUploadLinkResponse.model_validate(response)
+
+        except (RequestException, ValueError) as e:
+            logger.error(f"Failed to generate upload URL: {e}")
+            return None
+    
+
+    @handle_refresh_token
+    def get_all_storage_files(self,artifact_id: str) -> GetAllStorageFilesResponse:
+        """
+        Fetches all storage files from artifact_id.
+
+        :return: A GetAllStorageFilesResponse objects.
+        :rtype: GetAllStorageFilesResponse
+        """
+        try:
+            response = self.client.get(
+                f"/get_all_storage_files?artifact_id={artifact_id}", 
+                self.iam_client.get_custom_headers()
+            )
+
+            if not response:
+                logger.error("Empty response received from /get_all_storage_files API")
+                return []
+            
+            return GetAllStorageFilesResponse.model_validate(response)
+        except ValueError as ve:
+            logger.error(f"Failed to validate response data: {ve}")
+            return []
+
+    @handle_refresh_token
+    def get_all_templates_with_org(self) -> GetTemplatesResponse:
+        """
+        Retrieves all templates with organization information.
+
+        :return: A GetTemplatesResponse objects.
+        :rtype: GetTemplatesResponse
+        """
+        try:
+            response = self.client.get(
+                "/get_all_templates_with_org",
+                self.iam_client.get_custom_headers()
+            )
+
+            if not response:
+                logger.error("Empty response received from /get_all_templates_with_org API")
+                return []
+            
+            return GetTemplatesResponse.model_validate(response) 
+        except ValueError as ve:
+            logger.error(f"Failed to validate response data: {ve}")
+            return []
+
+
+    @handle_refresh_token
+    def get_all_customize_templates(self) -> GetTemplatesResponse:
+        """
+        Fetches all customize templates.
+
+        :return: A GetTemplatesResponse objects.
+        :rtype: GetTemplatesResponse
+        """
+        try:
+            response = self.client.get("/get_all_customize_templates", self.iam_client.get_custom_headers())
+
+            if not response:
+                logger.error("Empty response received from /get_all_customize_templates API")
+                return []
+            return GetTemplatesResponse.model_validate(response)
+        except ValueError as ve:
+            logger.error(f"Failed to validate response data: {ve}")
+            return []
