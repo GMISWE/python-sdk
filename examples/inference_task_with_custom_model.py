@@ -23,7 +23,7 @@ from openai import OpenAI
 
 # Option 2: Use a pre-downloaded model checkpoint
 # Check the full list of pre-downloaded models in README.md
-pick_pre_downloaded_model = "meta-llama/Llama-3.3-70B-Instruct"
+pick_pre_downloaded_model = "deepseek-ai/DeepSeek-R1-Distill-Qwen-1.5B"
 
 
 
@@ -44,7 +44,7 @@ print(f"Found {len(templates)} templates: {templates}")
 
 # Example for vllm serve command
 picked_template_name = "gmi_vllm_0.8.4"
-serve_command = "vllm serve meta-llama/Llama-3.3-70B-Instruct --trust-remote-code --gpu-memory-utilization 0.8 --data-parallel-size 1 -tp 2 --enable-chunked-prefill --max_model_len 8192"
+serve_command = "vllm serve deepseek-ai/DeepSeek-R1-Distill-Qwen-1.5B --trust-remote-code --gpu-memory-utilization 0.8 --data-parallel-size 1 -tp 1 --enable-chunked-prefill --max_model_len 8192"
 
 # Example for sglang serve command
 # picked_template_name = "gmi_sglang_0.4.5.post1"
