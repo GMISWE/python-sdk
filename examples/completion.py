@@ -9,7 +9,7 @@ from openai import OpenAI
 logger = logging.getLogger(__name__)
 
 
-def call_chat_completion(client: Client, api_key: str, task_id: str) -> str:
+def call_chat_completion(client: Client, api_key: str, task_id: str, model_name: str) -> str:
     task_manager = client.task_manager
     try:
         task = task_manager.get_task(task_id)
@@ -39,7 +39,7 @@ def call_chat_completion(client: Client, api_key: str, task_id: str) -> str:
     )
     # Make a chat completion request using the new OpenAI client.
     completion = open_ai.chat.completions.create(
-        model="deepseek-ai/DeepSeek-R1-Distill-Qwen-1.5B",
+        model=model_name,
         messages=[
             {"role": "system", "content": "You are a helpful assistant."},
             {"role": "user", "content": "Who are you?"},
