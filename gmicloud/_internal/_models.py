@@ -105,6 +105,7 @@ class CreateArtifactRequest(BaseModel):
     need_update_icon: Optional[bool] = False  # Whether to update the artifact icon.
     template_id: Optional[str] = ""  # ID of the template used to create the artifact.
 
+
 class CreateArtifactResponse(BaseModel):
     """
     Response object after creating an artifact.

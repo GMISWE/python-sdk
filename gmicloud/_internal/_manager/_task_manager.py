@@ -236,6 +236,13 @@ class TaskManager:
                 raise Exception(f"Task stopping takes more than {timeout_s // 60} minutes. Testing aborted.")
             time.sleep(10)
 
+    def get_task_endpoint_url(self, task_id: str) -> str:
+        task = self.get_task(task_id)
+        if task.endpoint_info is not None and task.endpoint_info.endpoint_status == TaskEndpointStatus.RUNNING:
+            return task.endpoint_info.endpoint_url
+        else:
+            return ""
+
 
     def get_usage_data(self, start_timestamp: str, end_timestamp: str) -> GetUsageDataResponse:
         """
