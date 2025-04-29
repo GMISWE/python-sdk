@@ -112,6 +112,57 @@
                 }
             }
         },
+        "/create_storagefile_upload_url": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Retrieves the storage URL for an artifact.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "artifacts"
+                ],
+                "summary": "Create artifact storage file upload URL",
+                "parameters": [
+                    {
+                        "description": "Resumable Upload Link Request",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/artifact.ResumableUploadLinkRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/artifact.ResumableUploadLinkResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/common.APIErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/common.APIErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/delete_artifact": {
             "delete": {
                 "security": [
@@ -249,6 +300,135 @@
                             "items": {
                                 "$ref": "#/definitions/artifact.GetAllArtifactsWithEndpointsResponse"
                             }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/common.APIErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/common.APIErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/get_all_customize_templates": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Retrieves all customize templates by org ID.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "artifacts"
+                ],
+                "summary": "Get all customize templates by org ID",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/artifact.GetTemplatesResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/common.APIErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/common.APIErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/get_all_storage_files": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Retrieves all files stored in the GCS storage bucket for the specified artifact ID.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "artifacts"
+                ],
+                "summary": "Get all storage files for an artifact",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Artifact ID",
+                        "name": "artifact_id",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/artifact.GetAllStorageFilesResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/common.APIErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/common.APIErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/get_all_templates_with_org": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Retrieves all templates with public and private by org ID.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "artifacts"
+                ],
+                "summary": "Get all templates with public and private by org ID",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/artifact.GetTemplatesResponse"
                         }
                     },
                     "400": {
@@ -743,6 +923,13 @@
                         "type": "string"
                     }
                 },
+                "artifact_volume_path": {
+                    "description": "TODO: temporary field, need to optimize the way to get the model file path.",
+                    "type": "string"
+                },
+                "deployment_type": {
+                    "type": "string"
+                },
                 "env_parameters": {
                     "type": "array",
                     "items": {
@@ -757,6 +944,12 @@
                     "items": {
                         "$ref": "#/definitions/artifact.ModelParameter"
                     }
+                },
+                "need_update_icon": {
+                    "type": "boolean"
+                },
+                "template_id": {
+                    "type": "string"
                 }
             }
         },
@@ -792,6 +985,9 @@
             "type": "object",
             "properties": {
                 "artifact_id": {
+                    "type": "string"
+                },
+                "delete_at": {
                     "type": "string"
                 },
                 "file_name": {
@@ -849,6 +1045,20 @@
                 }
             }
         },
+        "artifact.GetAllStorageFilesResponse": {
+            "type": "object",
+            "properties": {
+                "artifact_id": {
+                    "type": "string"
+                },
+                "files": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/artifact.StorageFileInfo"
+                    }
+                }
+            }
+        },
         "artifact.GetArtifactResponse": {
             "type": "object",
             "properties": {
@@ -878,6 +1088,9 @@
                 },
                 "build_status": {
                     "type": "string"
+                },
+                "model_price": {
+                    "$ref": "#/definitions/common.BillingModelPrice"
                 }
             }
         },
@@ -904,6 +1117,9 @@
                     "items": {
                         "$ref": "#/definitions/common.EndpointInfo"
                     }
+                },
+                "model_price": {
+                    "$ref": "#/definitions/common.BillingModelPrice"
                 }
             }
         },
@@ -1037,6 +1253,23 @@
                 }
             }
         },
+        "artifact.StorageFileInfo": {
+            "type": "object",
+            "properties": {
+                "download_link": {
+                    "type": "string"
+                },
+                "file_name": {
+                    "type": "string"
+                },
+                "size": {
+                    "type": "integer"
+                },
+                "upload_time": {
+                    "type": "string"
+                }
+            }
+        },
         "artifact.Template": {
             "type": "object",
             "properties": {
@@ -1055,8 +1288,7 @@
             "type": "object",
             "required": [
                 "image_link",
-                "name",
-                "volume_path"
+                "name"
             ],
             "properties": {
                 "description": {
@@ -1067,6 +1299,12 @@
                     "items": {
                         "$ref": "#/definitions/artifact.EnvParameter"
                     }
+                },
+                "huggingface_model_id": {
+                    "type": "string"
+                },
+                "huggingface_token": {
+                    "type": "string"
                 },
                 "icon_link": {
                     "type": "string"
@@ -1083,6 +1321,9 @@
                         "$ref": "#/definitions/artifact.ModelParameter"
                     }
                 },
+                "model_source": {
+                    "type": "string"
+                },
                 "name": {
                     "type": "string"
                 },
@@ -1097,6 +1338,9 @@
                     "items": {
                         "type": "string"
                     }
+                },
+                "type": {
+                    "type": "string"
                 },
                 "volume_path": {
                     "type": "string"
@@ -1183,6 +1427,32 @@
             "properties": {
                 "error": {
                     "type": "string"
+                }
+            }
+        },
+        "common.BillingModelPrice": {
+            "type": "object",
+            "properties": {
+                "cacheHit": {
+                    "type": "boolean"
+                },
+                "effectiveAt": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "modelName": {
+                    "type": "string"
+                },
+                "pricePer1mCompletionToken": {
+                    "type": "integer"
+                },
+                "pricePer1mPromptToken": {
+                    "type": "integer"
+                },
+                "valid": {
+                    "type": "boolean"
                 }
             }
         },
