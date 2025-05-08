@@ -148,7 +148,7 @@ class ArtifactManager:
             logger.error(f"Failed to create artifact from template, Error: {e}")
             raise e
         
-    def create_artifact_for_serve_command_and_custom_model(self, template_name: str, artifact_name: str, serve_command: str, gpu_type: str, artifact_description: str = "", pre_download_model: str = "") -> tuple[str, ReplicaResource]:
+    def create_artifact_for_serve_command_and_custom_model(self, template_name: str, artifact_name: str, serve_command: str, gpu_type: str, artifact_description: str = "", pre_download_model: str = "", env_parameters: Optional[dict[str, str]] = None) -> tuple[str, ReplicaResource]:
         """
         Create an artifact from a template and support custom model.
         :param artifact_template_name: The name of the template to use.
@@ -190,6 +190,9 @@ class ArtifactManager:
             env_vars = []
             if picked_template.template_data and picked_template.template_data.env_parameters:
                 env_vars = picked_template.template_data.env_parameters
+            if env_parameters:
+                for key, value in env_parameters.items():
+                    env_vars.append(EnvParameter(key=key, value=value))
             env_vars.extend([
                 EnvParameter(key="SERVE_COMMAND", value=serve_command),
                 EnvParameter(key="GPU_TYPE", value=gpu_type),

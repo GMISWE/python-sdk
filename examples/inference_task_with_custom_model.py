@@ -43,13 +43,13 @@ print(f"Found {len(templates)} templates: {templates}")
 # picked_template_name = "GMI_inference_template"
 
 # Example for vllm serve command
-picked_template_name = "gmi_vllm_0.8.4"
-serve_command = "vllm serve deepseek-ai/DeepSeek-R1-Distill-Qwen-1.5B --trust-remote-code --gpu-memory-utilization 0.8 --data-parallel-size 1 -tp 1 --enable-chunked-prefill --max_model_len 8192"
+# picked_template_name = "gmi_vllm_0.8.4"
+# serve_command = "vllm serve deepseek-ai/DeepSeek-R1-Distill-Qwen-1.5B --trust-remote-code --gpu-memory-utilization 0.8 --data-parallel-size 1 -tp 1 --enable-chunked-prefill --max_model_len 8192"
 
 # Example for sglang serve command
-# picked_template_name = "gmi_sglang_0.4.5.post1"
-# serve_command = "python3 -m sglang.launch_server --model-path deepseek-ai/DeepSeek-R1-Distill-Qwen-1.5B --trust-remote-code --tp-size 1 --mem-fraction-static 0.8"
-
+picked_template_name = "gmi_sglang_0.4.5.post1"
+serve_command = "python3 -m sglang.launch_server --model-path deepseek-ai/DeepSeek-R1-Distill-Qwen-1.5B --trust-remote-code --tp-size 1 --mem-fraction-static 0.8"
+env_parameters = {"SGL_ENABLE_JIT_DEEPGEMM" : "1"}
 
 ##### Create Artifact with template, model, serve command, and GPU type #####
 artifact_name = "artifact_hello_world"
@@ -60,6 +60,7 @@ artifact_id, recommended_replica_resources = cli.artifact_manager.create_artifac
     gpu_type="H100",
     artifact_description="This is a test artifact",
     pre_download_model=pick_pre_downloaded_model,
+    env_parameters=env_parameters,
 )
 print(f"Created artifact {artifact_id} with recommended resources: {recommended_replica_resources}")
 
