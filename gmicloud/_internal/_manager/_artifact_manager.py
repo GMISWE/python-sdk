@@ -401,7 +401,7 @@ class ArtifactManager:
                 artifact = self.get_artifact(artifact_id)
                 if artifact.build_status == BuildStatus.SUCCESS:
                     return
-                elif artifact.build_status in [BuildStatus.FAILED, BuildStatus.TIMEOUT, BuildStatus.CANCELLED]:
+                elif artifact.build_status in [BuildStatus.FAILURE, BuildStatus.TIMEOUT, BuildStatus.CANCELLED]:
                     raise Exception(f"Artifact build failed, status: {artifact.build_status}")
             except Exception as e:
                 logger.error(f"Failed to get artifact, Error: {e}")
