@@ -80,7 +80,6 @@ class Artifact(BaseModel):
     build_status: Optional[BuildStatus] = None  # Status of the artifact build (e.g., in progress, succeeded, failed).
     artifact_data: Optional[ArtifactData] = None  # Data associated with the artifact.
     artifact_metadata: Optional[ArtifactMetadata] = None  # Metadata describing the artifact.
-    artifact_parameters: Optional[ArtifactParameters] = None  # Parameters for the artifact.
     big_files_metadata: Optional[List[BigFileMetadata]] = None  # Metadata for large files associated with the artifact.
 
 
@@ -98,12 +97,13 @@ class CreateArtifactRequest(BaseModel):
     artifact_name: str  # The name of the artifact to create.
     artifact_description: Optional[str] = ""  # Description of the artifact.
     artifact_tags: Optional[List[str]] = None  # Tags for the artifact.
-    deployment_type: Optional[str] = ""  # Deployment type
-    template_id: Optional[str] = ""  # Template ID
     env_parameters: Optional[List["EnvParameter"]] = None  # Environment parameters.
     model_description: Optional[str] = ""  # Description of the model.
     model_parameters: Optional[List["ModelParameter"]] = None  # Parameters for the artifact.
     artifact_volume_path: Optional[str] = ""  # Path to the volume where the artifact is stored.
+    deployment_type: Optional[str] = ""  # Type of deployment (e.g., Ray, Kubernetes).
+    need_update_icon: Optional[bool] = False  # Whether to update the artifact icon.
+    template_id: Optional[str] = ""  # ID of the template used to create the artifact.
 
 
 class CreateArtifactResponse(BaseModel):
@@ -182,6 +182,19 @@ class GetArtifactResponse(BaseModel):
     big_files_metadata: Optional[List[BigFileMetadata]] = None  # Metadata for large files.
 
 
+class BillingModelPrice(BaseModel):
+    """
+    Billing model price information.
+    """
+    id: Optional[str] = ""  # Unique identifier for the billing model.
+    cacheHit: Optional[bool] = False
+    effectiveAt: Optional[str] = None  # Timestamp when the price becomes effective.
+    modelName: Optional[str] = ""  # Name of the model.
+    pricePer1mCompletionToken: Optional[int] = 0  # Price per million completion tokens.
+    pricePer1mPromptToken: Optional[int] = 0  # Price per million prompt tokens.
+    valid: Optional[bool] = False  # Indicates if the price is valid.
+
+
 class GetPublicArtifactsResponse(BaseModel):
     """
     Response containing public artifact details.
@@ -192,6 +205,7 @@ class GetPublicArtifactsResponse(BaseModel):
     artifact_details: Optional[ArtifactDetails] = None  # Additional details about the artifact.
     artifact_parameters: Optional[ArtifactParameters] = None  # Parameters for the artifact.
     endpoints: Optional[List[EndpointInfo]] = None  # Endpoints associated with the artifact.
+    model_price: Optional[List[BillingModelPrice]] = None  # Billing model price information.
 
 
 class UpdateArtifactRequestBody(BaseModel):
@@ -205,6 +219,7 @@ class UpdateArtifactRequestBody(BaseModel):
     model_description: Optional[str] = ""  # Description of the model.
     model_parameters: Optional[List["ModelParameter"]] = None  # Parameters for the artifact.
     need_update_icon: Optional[bool] = False  # Whether to update the artifact icon.
+    model_config = { "extra": "forbid" }
 
 
 class UpdateArtifactResponse(BaseModel):
@@ -220,7 +235,7 @@ class GetTemplatesResponse(BaseModel):
     """
     Response containing a list of artifact templates.
     """
-    artifact_templates: list["Template"]  # List of artifact templates.
+    artifact_templates: Optional[list["Template"]] = None  # List of artifact templates.
 
 
 class Template(BaseModel):
@@ -256,6 +271,7 @@ class DeleteBigfileResponse(BaseModel):
     artifact_id: str  # ID of the artifact.
     file_name: str  # Name of the deleted file.
     status: Optional[str] = ""  # Status of the deletion process.
+    delete_at: Optional[str] = None  # Timestamp when the file was deleted.
 
 
 class TemplateMetadata(BaseModel):
@@ -285,6 +301,11 @@ class TemplateData(BaseModel):
     tags: Optional[List[str]] = None  # Tags associated with the artifact template.
     volume_path: Optional[str] = ""  # Path to the volume where the artifact is stored.
     env_parameters: Optional[List["EnvParameter"]] = None  # Added missing field
+    model_description: Optional[str] = ""  # Added missing field
+    huggingface_model_id: Optional[str] = ""  # ID of the Hugging Face model associated with the template.
+    huggingface_token: Optional[str] = ""  # Token for accessing the Hugging Face model.
+    model_source: Optional[str] = ""  # Source of the model (e.g., Hugging Face, custom).
+    type: Optional[str] = ""  # Type of the artifact template (e.g., model, DockerImage, etc.).
 
 
 class ModelParameter(BaseModel):
@@ -316,7 +337,6 @@ class CreateArtifactFromTemplateRequest(BaseModel):
     """
     Request object to create a new artifact from a template.
     """
-    # user_id: str  # The user ID creating the artifact.
     artifact_template_id: str  # The ID of the artifact template to use.
     env_parameters: Optional[List["EnvParameter"]] = None  # Environment parameters.
 
@@ -587,3 +607,21 @@ class GetSelfAPIKeyResponse(BaseModel):
     """
     key: APIKey  # The API key of the current user.
     organization: Optional[Organization] = None  # Organization information.
+
+
+class StorageFileInfo(BaseModel):
+    """
+    Information about a file in storage.
+    """
+    download_link: Optional[str] = ""  # Link to download the file.
+    file_name: Optional[str] = ""  # Name of the file.
+    size: Optional[int] = 0  # Size of the file in bytes.
+    upload_time: Optional[str]= ""  # Time when the file was uploaded.
+
+
+class GetAllStorageFilesResponse(BaseModel):
+    """
+    Response object for getting a list of files in storage.
+    """
+    artifact_id: Optional[str] = ""  # ID of the artifact.
+    files: Optional[list[StorageFileInfo]] = None  # List of files in storage.

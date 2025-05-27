@@ -1,4 +1,5 @@
-from typing import List
+from typing import List,Union
+import json
 import logging
 from requests.exceptions import RequestException
 import json
@@ -28,7 +29,7 @@ class ArtifactClient:
         self.iam_client = iam_client
 
     @handle_refresh_token
-    def get_artifact(self, artifact_id: str) -> Optional[Artifact]:
+    def get_artifact(self, artifact_id: str) -> Optional[GetArtifactResponse]:
         """
         Fetches an artifact by its ID.
 
@@ -41,26 +42,62 @@ class ArtifactClient:
                 self.iam_client.get_custom_headers(),
                 {"artifact_id": artifact_id}
             )
-            return Artifact.model_validate(response) if response else None
+            return GetArtifactResponse.model_validate(response) if response else None
         except (RequestException, ValueError) as e:
             logger.error(f"Failed to fetch artifact {artifact_id}: {e}")
             return None
-
+    
     @handle_refresh_token
-    def get_all_artifacts(self) -> List[Artifact]:
+    def get_all_artifacts(self) -> List[GetAllArtifactsWithEndpointsResponse]:
         """
         Fetches all artifacts.
 
-        :return: A list of Artifact objects. If an error occurs, returns an empty list.
+        :return: A list of GetAllArtifactsWithEndpointsResponse objects. If an error occurs, returns an empty list.
         """
         try:
             response = self.client.get("/get_all_artifacts", self.iam_client.get_custom_headers())
             if not response:
                 logger.error("Empty response from /get_all_artifacts")
                 return []
-            return [Artifact.model_validate(item) for item in response]
+            return [GetAllArtifactsWithEndpointsResponse.model_validate(item) for item in response]
         except (RequestException, ValueError) as e:
             logger.error(f"Failed to fetch all artifacts: {e}")
+            return []
+
+    @handle_refresh_token
+    def get_public_artifact(self, artifact_id: str) -> Optional[GetPublicArtifactsResponse]:
+        """
+        Fetches a public artifact by its ID.
+
+        :param artifact_id: The ID of the public artifact to fetch.
+        :return: The public artifact object or None if an error occurs.
+        """
+        try:
+            response = self.client.get(
+                "/get_public_artifact",
+                self.iam_client.get_custom_headers(),
+                {"artifact_id": artifact_id}
+            )
+            return GetPublicArtifactsResponse.model_validate(response) if response else None
+        except (RequestException, ValueError) as e:
+            logger.error(f"Failed to fetch public artifact {artifact_id}: {e}")
+            return None
+    
+    @handle_refresh_token
+    def get_public_artifacts(self) -> List[GetPublicArtifactsResponse]:
+        """
+        Fetches all public artifacts.
+
+        :return: A list of public artifact objects. If an error occurs, returns an empty list.
+        """
+        try:
+            response = self.client.get(
+                "/get_public_artifacts", 
+                self.iam_client.get_custom_headers()
+            )
+            return [GetPublicArtifactsResponse.model_validate(item) for item in response]
+        except (RequestException, ValueError) as e:
+            logger.error(f"Failed to fetch all public artifacts: {e}")
             return []
 
     @handle_refresh_token
@@ -152,6 +189,43 @@ class ArtifactClient:
         except (RequestException, ValueError) as e:
             logger.error(f"Failed to add env parameters to artifact {artifact_id}: {e}")
             return 
+        
+    @handle_refresh_token
+    def update_artifact(
+            self, 
+            artifact_id: str, 
+            request: Union[UpdateArtifactRequestBody, dict, str]
+        ) -> Optional[UpdateArtifactResponse]:
+        """
+        Updates an artifact in the service.
+
+        :param artifact_id: The ID of the artifact to update.
+        :param request: Request object, dict, or JSON string containing artifact details.
+        :return: The response object containing the updated artifact details or None if an error occurs.
+        """
+        try:
+            if isinstance(request, str):
+                request = json.loads(request)
+            
+            if isinstance(request, dict):
+                try:
+                    request = UpdateArtifactRequestBody(**request)
+                except Exception as e:
+                    raise ValueError(e)
+
+            if not isinstance(request, UpdateArtifactRequestBody):
+                raise ValueError("Invalid request format for update_artifact")
+
+            response = self.client.put(
+                f"/update_artifact?artifact_id={artifact_id}",
+                self.iam_client.get_custom_headers(),
+                request.model_dump(exclude_unset=True)
+            )
+            return UpdateArtifactResponse.model_validate(response) if response else None
+
+        except (RequestException, ValueError, json.JSONDecodeError) as e:
+            logger.error(f"Failed to update artifact: {e}")
+            return None
 
     @handle_refresh_token
     def delete_artifact(self, artifact_id: str) -> Optional[DeleteArtifactResponse]:
@@ -242,4 +316,98 @@ class ArtifactClient:
 
         except RequestException as e:
             logger.error(f"Request to /get_public_templates failed: {e}")
+            return []
+
+
+    @handle_refresh_token
+    def create_storagefile_upload_url(
+            self, 
+            request: ResumableUploadLinkRequest
+        ) -> Optional[ResumableUploadLinkResponse]:
+        """
+        Generates a upload_link URL for uploading a storage file.
+
+        :param request: The request object containing the artifact ID, file name, and file type.
+        :return: The response object containing the pre-signed URL and upload details, or None if an error occurs.
+        """
+        try:
+            response = self.client.post("/create_storagefile_upload_url",
+                                        self.iam_client.get_custom_headers(),
+                                        request.model_dump())
+
+            if not response:
+                logger.error("Empty response from /create_storagefile_upload_url")
+                return None
+
+            return ResumableUploadLinkResponse.model_validate(response)
+
+        except (RequestException, ValueError) as e:
+            logger.error(f"Failed to generate upload URL: {e}")
+            return None
+    
+
+    @handle_refresh_token
+    def get_all_storage_files(self,artifact_id: str) -> GetAllStorageFilesResponse:
+        """
+        Fetches all storage files from artifact_id.
+
+        :return: A GetAllStorageFilesResponse objects.
+        :rtype: GetAllStorageFilesResponse
+        """
+        try:
+            response = self.client.get(
+                f"/get_all_storage_files?artifact_id={artifact_id}", 
+                self.iam_client.get_custom_headers()
+            )
+
+            if not response:
+                logger.error("Empty response received from /get_all_storage_files API")
+                return []
+            
+            return GetAllStorageFilesResponse.model_validate(response)
+        except ValueError as ve:
+            logger.error(f"Failed to validate response data: {ve}")
+            return []
+
+    @handle_refresh_token
+    def get_all_templates_with_org(self) -> GetTemplatesResponse:
+        """
+        Retrieves all templates with organization information.
+
+        :return: A GetTemplatesResponse objects.
+        :rtype: GetTemplatesResponse
+        """
+        try:
+            response = self.client.get(
+                "/get_all_templates_with_org",
+                self.iam_client.get_custom_headers()
+            )
+
+            if not response:
+                logger.error("Empty response received from /get_all_templates_with_org API")
+                return []
+            
+            return GetTemplatesResponse.model_validate(response) 
+        except ValueError as ve:
+            logger.error(f"Failed to validate response data: {ve}")
+            return []
+
+
+    @handle_refresh_token
+    def get_all_customize_templates(self) -> GetTemplatesResponse:
+        """
+        Fetches all customize templates.
+
+        :return: A GetTemplatesResponse objects.
+        :rtype: GetTemplatesResponse
+        """
+        try:
+            response = self.client.get("/get_all_customize_templates", self.iam_client.get_custom_headers())
+
+            if not response:
+                logger.error("Empty response received from /get_all_customize_templates API")
+                return []
+            return GetTemplatesResponse.model_validate(response)
+        except ValueError as ve:
+            logger.error(f"Failed to validate response data: {ve}")
             return []
