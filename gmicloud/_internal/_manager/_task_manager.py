@@ -241,6 +241,10 @@ class TaskManager:
         if task.endpoint_info is not None and task.endpoint_info.endpoint_status == TaskEndpointStatus.RUNNING:
             return task.endpoint_info.endpoint_url
         else:
+            if task.cluster_endpoints:
+                for ce in task.cluster_endpoints:
+                    if ce.endpoint_status == TaskEndpointStatus.RUNNING:
+                        return ce.endpoint_url
             return ""
 
 
