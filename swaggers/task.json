@@ -3,7 +3,7 @@
     "swagger": "2.0",
     "info": {
         "description": "API for managing job scheduler",
-        "title": "Job Scheduler Server",
+        "title": "Job Scheduler",
         "contact": {},
         "version": "1.0"
     },
@@ -522,6 +522,23 @@
                 }
             }
         },
+        "common.RayServiceStatus": {
+            "type": "object",
+            "properties": {
+                "activeServiceStatus": {
+                    "type": "string"
+                },
+                "pendingServiceStatus": {
+                    "type": "string"
+                },
+                "serviceStatus": {
+                    "type": "string"
+                },
+                "timestamp": {
+                    "type": "integer"
+                }
+            }
+        },
         "common.RayTaskConfig": {
             "type": "object",
             "required": [
@@ -593,6 +610,14 @@
                 "readiness_status": {
                     "$ref": "#/definitions/common.ReadinessStatus"
                 },
+                "running_service_status": {
+                    "description": "need to revise for multiple cluster service status",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/common.RayServiceStatus"
+                        }
+                    ]
+                },
                 "task_id": {
                     "type": "string"
                 },
@@ -618,6 +643,12 @@
                 },
                 "task_scheduling": {
                     "$ref": "#/definitions/common.TaskScheduling"
+                },
+                "update_by": {
+                    "type": "string"
+                },
+                "user_preference": {
+                    "$ref": "#/definitions/common.TaskUserPreference"
                 }
             }
         },
@@ -701,6 +732,14 @@
                 "TASK_ARCHIVED"
             ]
         },
+        "common.TaskUserPreference": {
+            "type": "object",
+            "properties": {
+                "geo_location": {
+                    "type": "string"
+                }
+            }
+        },
         "common.UsageData": {
             "type": "object",
             "properties": {
@@ -727,22 +766,6 @@
                 },
                 "user_id": {
                     "type": "string"
-                }
-            }
-        },
-        "common.UserPreference": {
-            "type": "object",
-            "properties": {
-                "block_list": {
-                    "description": "List of locations to block",
-                    "type": "array",
-                    "items": {
-                        "type": "string"
-                    }
-                },
-                "preference_scale": {
-                    "description": "Scale between 0 (cost) and 1 (speed)",
-                    "type": "number"
                 }
             }
         },
@@ -787,9 +810,6 @@
                 },
                 "owner": {
                     "$ref": "#/definitions/common.Owner"
-                },
-                "user_preference": {
-                    "$ref": "#/definitions/common.UserPreference"
                 }
             }
         },

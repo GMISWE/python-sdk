@@ -32,27 +32,47 @@ class ArtifactManager:
         self.iam_client = iam_client
         self.artifact_client = ArtifactClient(iam_client)
 
-    def get_artifact(self, artifact_id: str) -> Artifact:
+    def get_artifact(self, artifact_id: str) -> GetArtifactResponse:
         """
         Retrieve an artifact by its ID.
 
         :param artifact_id: The ID of the artifact to retrieve.
-        :return: The Artifact object associated with the ID.
-        :rtype: Artifact
+        :return: The GetArtifactResponse object associated with the ID.
+        :rtype: GetArtifactResponse
         :raises ValueError: If `artifact_id` is None or empty.
         """
         self._validate_artifact_id(artifact_id)
 
         return self.artifact_client.get_artifact(artifact_id)
 
-    def get_all_artifacts(self) -> List[Artifact]:
+    def get_all_artifacts(self) -> List[GetAllArtifactsWithEndpointsResponse]:
         """
-        Retrieve all artifacts for a given user.
+        Fetches all artifacts.
 
-        :return: A list of Artifact objects associated with the user.
-        :rtype: List[Artifact]
+        :return: A list of GetAllArtifactsWithEndpointsResponse objects associated with the user.
+        :rtype: List[GetAllArtifactsWithEndpointsResponse]
         """
         return self.artifact_client.get_all_artifacts()
+
+    def get_public_artifact(self, artifact_id: str)-> GetPublicArtifactsResponse:
+        """
+        Fetches a public artifact by its ID.
+
+        :param artifact_id: The ID of the public artifact to fetch.
+        :return: The public artifact object or None if an error occurs.
+        :rtype: GetPublicArtifactsResponse
+        """
+        return self.artifact_client.get_public_artifact(artifact_id)
+
+    def get_public_artifacts(self) -> List[GetPublicArtifactsResponse]:
+        """
+        Retrieve all public artifacts.
+
+        :return: A list of GetPublicArtifactsResponse objects that are public and have the given name.
+        :rtype: List[GetPublicArtifactsResponse]
+        :raises ValueError: If `artifact_name` is None or empty.
+        """
+        return self.artifact_client.get_public_artifacts()
 
     def create_artifact(
             self,
@@ -214,6 +234,24 @@ class ArtifactManager:
 
         return self.artifact_client.rebuild_artifact(artifact_id)
 
+    def update_artifact(
+            self, 
+            artifact_id: str, 
+            request: Union[UpdateArtifactRequestBody, dict, str]
+        ) -> Optional[UpdateArtifactResponse]:
+        """
+        Updates an artifact in the service.
+        
+        :param artifact_id: The ID of the artifact to delete.
+        :param request: The request is dict, or JSON string or UpdateArtifactRequestBody object containing artifact details.
+        :return: A `UpdateArtifactResponse` object containing information about the update artifact.
+        :rtype: UpdateArtifactResponse
+        :raises ValueError: If `artifact_id` is None or empty
+        """
+        self._validate_artifact_id(artifact_id)
+        
+        return self.artifact_client.update_artifact(artifact_id,request)
+    
     def delete_artifact(self, artifact_id: str) -> DeleteArtifactResponse:
         """
         Delete an existing artifact.
@@ -438,6 +476,56 @@ class ArtifactManager:
             logger.error(f"Failed to get artifact templates, Error: {e}")
             return []
 
+    def create_storagefile_upload_url(
+            self, 
+            artifact_id: str,
+            file_name: str = "",
+            file_type: str = "" 
+        ) -> Optional[ResumableUploadLinkResponse]:
+        """
+        Create a resumable upload link for a storage file.
+        :param artifact_id : ID of the artifact for which the upload URL is requested.
+        :return: The resumable upload link response.
+        :rtype: ResumableUploadLinkResponse
+        """
+        self._validate_artifact_id(artifact_id)
+
+        request = ResumableUploadLinkRequest(
+            artifact_id=artifact_id,
+            file_name=file_name,
+            file_type=file_type
+        )
+        return self.artifact_client.create_storagefile_upload_url(request)
+
+    def get_all_storage_files(self,artifact_id: str) -> GetAllStorageFilesResponse:
+        """
+        Get all storage files.
+
+        :return: A GetAllStorageFilesResponse objects.
+        :rtype: GetAllStorageFilesResponse
+        """
+        self._validate_artifact_id(artifact_id)
+        
+        return self.artifact_client.get_all_storage_files(artifact_id)
+    
+
+    def get_all_templates_with_org(self) -> GetTemplatesResponse:
+        """
+        Get all templates with organization.
+
+        :return: A GetTemplatesResponse objects.
+        :rtype: GetTemplatesResponse
+        """
+        return self.artifact_client.get_all_templates_with_org()
+
+    def get_all_customize_templates(self) -> GetTemplatesResponse:
+        """
+        Get all customize templates.
+
+        :return: A GetTemplatesResponse objects.
+        :rtype: GetTemplatesResponse
+        """
+        return self.artifact_client.get_all_customize_templates()
 
     @staticmethod
     def _validate_file_name(file_name: str) -> None:
