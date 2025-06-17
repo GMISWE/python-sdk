@@ -24,6 +24,7 @@ class TaskEndpointStatus(str, Enum):
     UNREADY = "unready"
     NEW = "new"
 
+
 class TaskStatus(str, Enum):
     IDLE = "idle"
     STARTING = "starting"
@@ -32,7 +33,24 @@ class TaskStatus(str, Enum):
     NEEDSTOP = "needstop"
     ARCHIVED = "archived"
 
+
 class ModelParameterType(str, Enum):
     NUMERIC = "numeric"
     TEXT = "text"
     BOOLEAN = "boolean"
+
+
+class RequestStatus(Enum):
+    CREATED = "created"
+    QUEUED = "queued"
+    DISPATCHED = "dispatched"
+    PROCESSING = "processing"
+    SUCCESS = "success"
+    FAILED = "failed"
+    CANCELLED = "cancelled"
+
+
+class HostType(Enum):
+    DEFAULT = ""
+    INTERNAL = "internal"
+    EXTERNAL = "external"

@@ -2,7 +2,7 @@ from typing import Optional, List, Union
 from datetime import datetime
 
 from pydantic import BaseModel
-from gmicloud._internal._enums import BuildStatus, TaskStatus, TaskEndpointStatus, ModelParameterType
+from gmicloud._internal._enums import *
 
 
 class BigFileMetadata(BaseModel):
@@ -587,3 +587,85 @@ class GetSelfAPIKeyResponse(BaseModel):
     """
     key: APIKey  # The API key of the current user.
     organization: Optional[Organization] = None  # Organization information.
+
+
+
+# ----------------- video models -----------------
+
+class SubmitRequestRequest(BaseModel):
+    """
+    The request body for submits a new asynchronous request 
+    """
+    model: str
+    payload: dict
+
+
+class SubmitRequestResponse(BaseModel):
+    """
+    Represents the response body for a submitted request.
+    """
+    created_at: Optional[int] = 0
+    model: Optional[str] = ""
+    queued_at: Optional[int] = 0
+    request_id: Optional[str] = ""
+    status: Optional[RequestStatus] = None
+    updated_at: Optional[int] = 0
+
+
+class GetRequestResponse(BaseModel):
+    """
+    Response object for getting a specific request.
+    """
+    created_at: Optional[int] = 0
+    is_public: Optional[bool] = False
+    model: Optional[str] = ""
+    org_id: Optional[str] = ""
+    outcome: Optional[dict] = {}
+    payload: Optional[dict] = {}
+    queued_at: Optional[int] = 0
+    qworker_id: Optional[str] = ""
+    request_id: Optional[str] = ""
+    status: Optional[RequestStatus] = None
+    updated_at: Optional[int] = 0
+
+
+class ListUserRequestsResponse(BaseModel):
+    """
+    Represents the response body for listing user requests.
+    """
+    requests: List[GetRequestResponse]
+    total: Optional[int] = 0  # Total number of requests available for the user.
+
+
+class PriceInfo(BaseModel):
+    """
+    Represents pricing information for a model.
+    """
+    price: Optional[int] = 0
+    pricing_type: Optional[str] = ""
+    unit: Optional[str] = ""
+
+
+class GetModelResponse(BaseModel):
+    """
+    Represents the response body for a specific model.
+    """
+    background_image_url: Optional[str] = ""
+    brief_description: Optional[str] = ""
+    created_at: Optional[int] = 0
+    detailed_description: Optional[str] = ""
+    external_api_endpoint: Optional[str] = ""
+    external_api_url: Optional[str] = ""
+    external_provider: Optional[str] = ""
+    host_type: Optional[HostType] = HostType.DEFAULT
+    icon_link: Optional[str] = ""
+    internal_parameters: Optional[dict] = {}
+    modalities: Optional[dict] = {}
+    model: Optional[str] = ""
+    model_type: Optional[str] = ""
+    org_id: Optional[str] = ""
+    parameters: Optional[list] = []
+    price_info: Optional[PriceInfo] = None
+    qworkers: Optional[int] = 0
+    tags: Optional[list[str]] = []
+    updated_at: Optional[int] = 0

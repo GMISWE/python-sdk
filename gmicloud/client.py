@@ -8,6 +8,7 @@ from ._internal._client._iam_client import IAMClient
 from ._internal._manager._artifact_manager import ArtifactManager
 from ._internal._manager._task_manager import TaskManager
 from ._internal._manager._iam_manager import IAMManager
+from ._internal._manager._video_manager import VideoManager
 from ._internal._enums import BuildStatus, TaskStatus, TaskEndpointStatus
 from ._internal._models import Task, TaskConfig, RayTaskConfig, TaskScheduling, ReplicaResource
 
@@ -37,6 +38,7 @@ class Client:
         self._artifact_manager = None
         self._task_manager = None
         self._iam_manager = None
+        self._video_manager = None
 
     @property
     def artifact_manager(self):
@@ -57,6 +59,16 @@ class Client:
         if self._task_manager is None:
             self._task_manager = TaskManager(self.iam_client)
         return self._task_manager
+
+    @property
+    def video_manager(self):
+        """
+        Lazy initialization for VideoManager.
+        Ensures the Client instance controls its lifecycle.
+        """
+        if self._video_manager is None:
+            self._video_manager = VideoManager(self.iam_client)
+        return self._video_manager
 
     @property
     def iam_manager(self):
