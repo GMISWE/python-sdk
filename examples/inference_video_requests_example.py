@@ -12,7 +12,7 @@ cli = Client()
 
 #   ------ 2. get models ------
 # models = cli.video_manager.get_models()
-# # print("[+]Available video models:\n",models,end="\n\n")
+# print("[+]Available video models:\n",models,end="\n\n")
 
 #   ------ 3. get model detail ------
 # model_id = models[0].model
@@ -43,32 +43,47 @@ cli = Client()
 # )
 
 request = SubmitRequestRequest(
-    model = "Wan-AI_Wan2.1-T2V-14B",
+    model = "Kling-Image2Video-V1.6-Pro",
     payload = {
-        "prompt": "A dog reading a book",
+        'image' : "https://images.fineartamerica.com/images/artworkimages/mediumlarge/2/sunshine-flowers-sharon-lapkin.jpg",
+        'cfg_scale' : 0.5,
+        "prompt": "flowers with sunshine",
+        'duration': '5',
         "video_length": 5
     }
 )
 response = cli.video_manager.create_request(request)
 print("[+]response submitted:\n", response, end="\n\n")
+request_id = response.request_id
 
-#  ------ 7. loop to get request detail ------
+# #  ------ 7. loop to get request detail ------
 def time_to_str(time_in_seconds):
     """Convert seconds to a human-readable format."""
     hours, remainder = divmod(time_in_seconds, 3600)
     minutes, seconds = divmod(remainder, 60)
-    return f"{hours}:{minutes}:{seconds}"
+    return f"{int(hours)}:{int(minutes)}:{int(seconds)}"
 
-request_id = response.request_id
 count = 0
 while True:
     response = cli.video_manager.get_request_detail(request_id)
-    time_str = time_to_str(count * 5)
+    if isinstance(response, dict):
+        print(f"[!]Error retrieving request detail: {response}")
+        break
+    time_str = time_to_str(time.time() - response.queued_at) if response.queued_at else "0:0:0"
+    # time_str = time_to_str(count * 5)
     print(f"[+][{time_str}][+]Request detail for {request_id}:\n", response, end="\n\n")
     print(f"[+][{time_str}][+]Request status: {response.status}",end="\n\n")
     if response.status == "success":
         print("[+]Request completed successfully.")
         break
+    elif response.status == "failed":
+        print("[+]Request failed.")
+        print("[+]Error message:", response.outcome if response.outcome else "No error message provided.")
+        break
+    elif response.status == "cancelled":
+        print("[+]Request was cancelled.")
+        break
+
     time.sleep(5)
     count += 1
 

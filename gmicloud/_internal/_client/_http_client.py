@@ -57,28 +57,28 @@ class HTTPClient:
             response = requests.request(method, url, params=params, json=data, headers=headers)
             logger.debug(response.text)
             if response.status_code == 401:
-                raise UnauthorizedError("Access token expired or invalid.")
+                raise UnauthorizedError(f"Unauthorized Error : {response.status_code} - Access token expired or invalid.")
             elif response.status_code != 200 and response.status_code != 201:
-                if url.find("ie/artifact") != -1 or url.find("ie/task") != -1:
+                if url.find("ie/artifact") != -1 or url.find("ie/task") != -1 or url.find("ie/requestqueue") != -1:
                     error_message = response.json().get('error', 'Unknown error')
                 else:
                     error_message = response.json().get('message', 'Unknown error')
-                raise APIError(f"HTTP Request failed: {error_message}")
+                raise APIError(f"HTTP Request failed: {response.status_code} - {error_message}")
             # Raise for HTTP errors
             response.raise_for_status()
 
         except requests.exceptions.RequestException as e:
-            raise APIError(f"HTTP Request failed: {str(e)}")
+            raise APIError(f"HTTP Request failed: {response.status_code} - {str(e)}")
         except ValueError as e:
             # Fallback if response JSON is invalid
-            raise APIError(f"Failed to parse JSON response: {response.text}")
+            raise APIError(f"Failed to parse JSON response: {response.status_code} - {response.text}")
 
         if response.headers.get(CONTENT_TYPE_HEADER).find(JSON_CONTENT_TYPE) != -1:
             return response.json()
         elif response.headers.get(CONTENT_TYPE_HEADER).find(TEXT_CONTENT_TYPE) != -1:
-            raise APIError(f"Got text response: {response.text}")
+            raise APIError(f"Got text response: {response.status_code} - {response.text}")
         else:
-            raise APIError(f"Unsupported content type: {response.headers.get(CONTENT_TYPE_HEADER)}")
+            raise APIError(f"Unsupported content type: {response.status_code} - {response.headers.get(CONTENT_TYPE_HEADER)}")
 
     def post(self, endpoint, custom_headers=None, data=None):
         """
