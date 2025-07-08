@@ -18,14 +18,14 @@ logger = logging.getLogger(__name__)
 class Client:
     def __init__(self, client_id: Optional[str] = "", email: Optional[str] = "", password: Optional[str] = ""):
         if not client_id or not client_id.strip():
-            client_id = os.getenv("GMI_CLOUD_CLIENT_ID")
+            client_id = os.getenv("GMI_CLOUD_CLIENT_ID","gmicloud")
         if not email or not email.strip():
             email = os.getenv("GMI_CLOUD_EMAIL")
         if not password or not password.strip():
             password = os.getenv("GMI_CLOUD_PASSWORD")
 
-        if not client_id:
-            raise ValueError("Client ID must be provided.")
+        if len(client_id.strip()) > 8:
+            client_id = client_id[:8]
         if not email:
             raise ValueError("Email must be provided.")
         if not password:
