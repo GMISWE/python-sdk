@@ -18,7 +18,7 @@ logger = logging.getLogger(__name__)
 class Client:
     def __init__(self, client_id: Optional[str] = "", email: Optional[str] = "", password: Optional[str] = ""):
         if not client_id or not client_id.strip():
-            client_id = os.getenv("GMI_CLOUD_CLIENT_ID","gmicloud")
+            client_id = os.getenv("GMI_CLOUD_CLIENT_ID","gmisdk")
         if not email or not email.strip():
             email = os.getenv("GMI_CLOUD_EMAIL")
         if not password or not password.strip():
