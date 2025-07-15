@@ -550,7 +550,8 @@ class CreateAPIKeyRequest(BaseModel):
     Request object for creating an API key.
     """
     name: str  # Name of the API key.
-    type: Optional[str] = ""  # Type of the API key.
+    type: Optional[str] = ""  # Declaration: This field is about to be abandoned
+    scope: Optional[str] = ""  # Scope of the API key.
     expiresAt: Optional[int] = 0  # Expiration timestamp for the API key.
 
 
@@ -567,7 +568,8 @@ class APIKey(BaseModel):
     """
     id: Optional[str] = ""  # API key ID.
     name: Optional[str] = ""  # API key name.
-    type: Optional[str] = ""  # API key type.
+    type: Optional[str] = ""  # Declaration: This field is about to be abandoned
+    scope: Optional[str] = ""  # Scope of the API key.
     partialKey: Optional[str] = ""  # Partial key for the API key.
     expiresAt: Optional[int] = 0  # Expiration timestamp for the API key.
     createdAt: Optional[int] = 0  # Creation timestamp for the API key.
