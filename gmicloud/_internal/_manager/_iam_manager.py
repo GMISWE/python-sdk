@@ -27,7 +27,7 @@ class IAMManager:
             print(expires_at)
 
         return self.iam_client.create_org_api_key(
-            CreateAPIKeyRequest(name=name, type="ie_model", expiresAt=expires_at))
+            CreateAPIKeyRequest(name=name, scope="ie_model", expiresAt=expires_at))
 
     def get_org_api_keys(self) -> List[APIKey]:
         """
