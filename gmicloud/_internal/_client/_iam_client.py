@@ -11,6 +11,7 @@ from ._auth_config import (
     write_user_refresh_token_to_system_config,
     is_refresh_token_expired
 )
+from .google_auth.authentication import GoogleAuthenticator
 logger = logging.getLogger(__name__)
 
 
@@ -36,58 +37,34 @@ class IAMClient:
         self._organization_id = ""
         self.client = HTTPClient(IAM_SERVICE_BASE_URL)
 
-    def login(self) -> bool:
+    def login(self, login_type: str = 'gmicloud') -> bool:
         """
         Logs in a user with the given email and password.
-        Returns True if login is successful, otherwise False.
+        :param login_type: Type of login, e.g., "gmicloud" or "google".
+        :return: True if login is successful, False otherwise.
         """
-        try:
-            # Check config refresh token is available and is not expired, if yes ,refresh it
-            temp_refresh_token = get_user_refresh_token_from_system_config(self._email)
-            if temp_refresh_token and not is_refresh_token_expired(temp_refresh_token):
-                self._refresh_token = temp_refresh_token
-                self.refresh_token()
-            else:
-                custom_headers = {CLIENT_ID_HEADER: self._client_id}
-                req = AuthTokenRequest(email=self._email, password=self._password)
-                auth_tokens_result = self.client.post("/me/auth-tokens", custom_headers, req.model_dump())
-
-                if not auth_tokens_result:
-                    logger.error("Login failed: Received empty response from auth-tokens endpoint")
+        
+        # Check config refresh token is available and is not expired, if expired ,refresh it
+        temp_refresh_token = get_user_refresh_token_from_system_config(self._email)
+        if temp_refresh_token and not is_refresh_token_expired(temp_refresh_token):
+            self._refresh_token = temp_refresh_token
+            self.refresh_token()
+        else:
+            if login_type == 'gmicloud':
+                if not self._gmicloud_login():
+                    logger.error("GMICLOUD login failed. Please check the email and password.")
                     return False
-
-                auth_tokens_resp = AuthTokenResponse.model_validate(auth_tokens_result)
-
-                # Handle 2FA
-                if auth_tokens_resp.is2FARequired:
-                    for attempt in range(3):
-                        code = input(f"Attempt {attempt + 1}/3: Please enter the 2FA code: ")
-                        create_session_req = CreateSessionRequest(
-                            type="native", authToken=auth_tokens_resp.authToken, otpCode=code
-                        )
-                        try:
-                            session_result = self.client.post("/me/sessions", custom_headers,
-                                                            create_session_req.model_dump())
-                            if session_result:
-                                break
-                        except RequestException:
-                            logger.warning("Invalid 2FA code, please try again.")
-                            if attempt == 2:
-                                logger.error("Failed to create session after 3 incorrect 2FA attempts.")
-                                return False
-                else:
-                    create_session_req = CreateSessionRequest(type="native", authToken=auth_tokens_resp.authToken,
-                                                            otpCode=None)
-                    session_result = self.client.post("/me/sessions", custom_headers, create_session_req.model_dump())
-
-                create_session_resp = CreateSessionResponse.model_validate(session_result)
-
-                self._access_token = create_session_resp.accessToken
-                self._refresh_token = create_session_resp.refreshToken
-                # first login write refresh token to system config
-                write_user_refresh_token_to_system_config(self._email,self._refresh_token)
+            elif login_type == 'google':
+                if not self._google_login():
+                    logger.error("Google login failed. Please check your credentials.")
+                    return False
+            else:
+                logger.error(f"Unsupported login type: {login_type}")
+                return False
+        try:
+            # first login write refresh token to system config
+            write_user_refresh_token_to_system_config(self._email,self._refresh_token,login_type=login_type)
             self._user_id = self.parse_user_id()
-
             # Fetch profile to get organization ID
             profile_result = self.client.get("/me/profile", self.get_custom_headers())
             if not profile_result:
@@ -101,6 +78,72 @@ class IAMClient:
         except (RequestException, ValueError, KeyError) as e:
             logger.error(f"Login failed due to exception: {e}")
             return False
+
+
+    def _gmicloud_login(self) -> bool:
+        try:
+            custom_headers = {CLIENT_ID_HEADER: self._client_id}
+            req = AuthTokenRequest(email=self._email, password=self._password)
+            auth_tokens_result = self.client.post("/me/auth-tokens", custom_headers, req.model_dump())
+
+            if not auth_tokens_result:
+                logger.error("Login failed: Received empty response from auth-tokens endpoint")
+                return False
+
+            auth_tokens_resp = AuthTokenResponse.model_validate(auth_tokens_result)
+
+            # Handle 2FA
+            if auth_tokens_resp.is2FARequired:
+                for attempt in range(3):
+                    code = input(f"Attempt {attempt + 1}/3: Please enter the 2FA code: ")
+                    create_session_req = CreateSessionRequest(
+                        type="native", authToken=auth_tokens_resp.authToken, otpCode=code
+                    )
+                    try:
+                        session_result = self.client.post("/me/sessions", custom_headers,
+                                                        create_session_req.model_dump())
+                        if session_result:
+                            break
+                    except RequestException:
+                        logger.warning("Invalid 2FA code, please try again.")
+                        if attempt == 2:
+                            logger.error("Failed to create session after 3 incorrect 2FA attempts.")
+                            return False
+            else:
+                create_session_req = CreateSessionRequest(type="native", authToken=auth_tokens_resp.authToken,
+                                                        otpCode=None)
+                session_result = self.client.post("/me/sessions", custom_headers, create_session_req.model_dump())
+
+            create_session_resp = CreateSessionResponse.model_validate(session_result)
+
+            self._access_token = create_session_resp.accessToken
+            self._refresh_token = create_session_resp.refreshToken
+            return True
+        
+        except Exception as e:
+            logger.error(f"GMICLOUD login failed: {e}")
+            return False
+        
+
+    def _google_login(self) -> bool:
+        # Handle Google login flow
+        google_auth = GoogleAuthenticator(self.client)
+        tokens = google_auth.gen_user_auth_tokens()
+        if not tokens:
+            print("Google login failed.")
+            return False
+        self._access_token = tokens.get("accessToken")
+        self._refresh_token = tokens.get("refreshToken")
+        user_info = google_auth.get_user_info()
+        if not user_info:
+            print("Failed to retrieve user information from Google.")
+            return False
+        logger.info(f"User info: {user_info}")
+        if self._email != user_info.get("email"):
+            print("Google email does not match the provided email.")
+            return False
+        return True
+
 
     def refresh_token(self) -> bool:
         """

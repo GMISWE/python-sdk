@@ -16,20 +16,43 @@ logger = logging.getLogger(__name__)
 
 
 class Client:
-    def __init__(self, email: Optional[str] = "", password: Optional[str] = ""):
+    def __init__(
+            self, 
+            email: Optional[str] = "", 
+            password: Optional[str] = "", 
+            login_type: str = 'gmicloud'
+        ):
+        """
+        Initialize the Client instance.
+        This method sets up the IAM client and prepares the managers for artifacts, tasks, IAM, and video.
+
+        :param email: User email for authentication.
+        :param password: User password for authentication.
+        :param login_type: Type of login, either 'gmicloud' or 'google'. [default: 'gmicloud']
+
+        Attention:
+        - If login_type is 'gmicloud', both email and password are required. 
+        - If login_type is 'google', only email is required, and the password is ignored
+        """
+
         if not email or not email.strip():
             email = os.getenv("GMI_CLOUD_EMAIL")
         if not password or not password.strip():
             password = os.getenv("GMI_CLOUD_PASSWORD")
         
+        if login_type not in ["gmicloud", "google"]:
+            raise ValueError("Invalid login type. Use 'gmicloud' or 'google'.")
+        
         if not email:
-            raise ValueError("Email must be provided.")
-        if not password:
-            raise ValueError("Password must be provided.")
-
+                raise ValueError("Email must be provided for google login.")
+        
+        if login_type == 'gmicloud':
+            if not password:
+                raise ValueError("Password must be provided for gmicloud login.")
+            
         client_id = "gmisdk"
         self.iam_client = IAMClient(client_id, email, password)
-        self.iam_client.login()
+        self.iam_client.login(login_type=login_type)
 
         # Managers are lazily initialized through private attributes
         self._artifact_manager = None
