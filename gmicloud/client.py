@@ -32,7 +32,7 @@ class Client:
 
         Attention:
         - If login_type is 'gmicloud', both email and password are required. 
-        - If login_type is 'google', only email is required, and the password is ignored
+        - If login_type is 'google', only google email is required, and the password is ignored
         """
 
         if not email or not email.strip():
@@ -43,12 +43,14 @@ class Client:
         if login_type not in ["gmicloud", "google"]:
             raise ValueError("Invalid login type. Use 'gmicloud' or 'google'.")
         
-        if not email:
-                raise ValueError("Email must be provided for google login.")
-        
         if login_type == 'gmicloud':
+            if not email:
+                raise ValueError("Email must be provided for gmicloud login.")
             if not password:
                 raise ValueError("Password must be provided for gmicloud login.")
+        else:
+            if not email:
+                raise ValueError("Google email must be provided for google login.")
             
         client_id = "gmisdk"
         self.iam_client = IAMClient(client_id, email, password)
