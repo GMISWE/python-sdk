@@ -9,7 +9,7 @@ from .._constants import CLIENT_ID_HEADER, AUTHORIZATION_HEADER
 from ._auth_config import (
     get_user_refresh_token_from_system_config,
     write_user_refresh_token_to_system_config,
-    is_refresh_token_expired
+    is_token_expired
 )
 logger = logging.getLogger(__name__)
 
@@ -36,22 +36,26 @@ class IAMClient:
         self._organization_id = ""
         self.client = HTTPClient(IAM_SERVICE_BASE_URL)
 
-    def login(self) -> bool:
+    def login(self, two_fa_code: Optional[str] = "") -> bool:
         """
         Logs in a user with the given email and password.
+        two_fa_code is used for two-factor authentication, if provided, don't need to input it manually.
         Returns True if login is successful, otherwise False.
         """
         try:
-            # Check config refresh token is available and is not expired, if yes ,refresh it
-            temp_refresh_token = get_user_refresh_token_from_system_config(self._email)
-            if temp_refresh_token and not is_refresh_token_expired(temp_refresh_token):
+            # check if tokens are available in config
+            temp_access_token, temp_refresh_token = get_user_refresh_token_from_system_config(self._email)
+            if temp_refresh_token and not is_token_expired(temp_refresh_token):
                 self._refresh_token = temp_refresh_token
-                self.refresh_token()
+                if temp_access_token and not is_token_expired(temp_access_token):
+                    self._access_token = temp_access_token
+                else:
+                    # if access token is expired, refresh it
+                    self.refresh_token()
             else:
                 custom_headers = {CLIENT_ID_HEADER: self._client_id}
                 req = AuthTokenRequest(email=self._email, password=self._password)
                 auth_tokens_result = self.client.post("/me/auth-tokens", custom_headers, req.model_dump())
-
                 if not auth_tokens_result:
                     logger.error("Login failed: Received empty response from auth-tokens endpoint")
                     return False
@@ -61,7 +65,7 @@ class IAMClient:
                 # Handle 2FA
                 if auth_tokens_resp.is2FARequired:
                     for attempt in range(3):
-                        code = input(f"Attempt {attempt + 1}/3: Please enter the 2FA code: ")
+                        code = two_fa_code if two_fa_code else input(f"Attempt {attempt + 1}/3: Please enter the 2FA code: ")
                         create_session_req = CreateSessionRequest(
                             type="native", authToken=auth_tokens_resp.authToken, otpCode=code
                         )
@@ -72,6 +76,7 @@ class IAMClient:
                                 break
                         except RequestException:
                             logger.warning("Invalid 2FA code, please try again.")
+                            two_fa_code = ""  # clear the two_fa_code to allow manual input in next attempt
                             if attempt == 2:
                                 logger.error("Failed to create session after 3 incorrect 2FA attempts.")
                                 return False
@@ -85,7 +90,7 @@ class IAMClient:
                 self._access_token = create_session_resp.accessToken
                 self._refresh_token = create_session_resp.refreshToken
                 # first login write refresh token to system config
-                write_user_refresh_token_to_system_config(self._email,self._refresh_token)
+                write_user_refresh_token_to_system_config(self._email,self._refresh_token,self._access_token)
             self._user_id = self.parse_user_id()
 
             # Fetch profile to get organization ID
@@ -112,7 +117,7 @@ class IAMClient:
                 result = self.client.patch("/me/sessions", custom_headers, {"refreshToken": self._refresh_token})
             except Exception as err:
                 logger.error(f"{str(err)}, please re-login.")
-                write_user_refresh_token_to_system_config(self._email,"")
+                write_user_refresh_token_to_system_config(self._email,"","")
                 return False
 
             if not result:
@@ -124,7 +129,7 @@ class IAMClient:
             self._refresh_token = resp.refreshToken
             # the _refresh_token will be updated when call this function
             # so write it to system config file for update the _refresh_token expired time
-            write_user_refresh_token_to_system_config(self._email,self._refresh_token)
+            write_user_refresh_token_to_system_config(self._email,self._refresh_token,self._access_token)
             return True
         except (RequestException, ValueError) as e:
             logger.error(f"Token refresh failed: {e}")

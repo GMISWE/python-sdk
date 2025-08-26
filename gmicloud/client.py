@@ -16,7 +16,40 @@ logger = logging.getLogger(__name__)
 
 
 class Client:
-    def __init__(self, email: Optional[str] = "", password: Optional[str] = ""):
+    def __init__(
+            self, 
+            email: Optional[str] = "",
+            password: Optional[str] = "",
+            two_fa_code: Optional[str] = "", 
+            lock = None
+        ):
+        
+        """
+        Initializes the Client with email and password, and performs login.
+
+        Parameters
+        ----------
+        email : str, optional
+            The user's email address. If not provided or empty, it will be read from the environment variable 'GMI_CLOUD_EMAIL'.
+        password : str, optional
+            The user's password. If not provided or empty, it will be read from the environment variable 'GMI_CLOUD_PASSWORD'.
+        two_fa_code : str, optional
+            The two-factor authentication code, if required.
+            The two fa code is mainly used to avoid inputting in multiple processes and to set it directly before the program starts, avoiding inputting it on the command line.
+        lock : Lock, optional
+            A process or thread lock object. If provided, login will be performed within the lock context to ensure mutual exclusion in concurrent scenarios.
+
+        Raises
+        ------
+        ValueError
+            If email or password is not provided or cannot be read from the environment.
+
+        Notes
+        -----
+        - If a lock is provided, login is performed inside a lock context to prevent race conditions in multi-threaded or multi-process environments.
+        - If running in a distributed environment (e.g., multiple Docker containers), use a distributed lock (such as Redis) for cross-container mutual exclusion.
+        """
+
         if not email or not email.strip():
             email = os.getenv("GMI_CLOUD_EMAIL")
         if not password or not password.strip():
@@ -29,8 +62,11 @@ class Client:
 
         client_id = "gmisdk"
         self.iam_client = IAMClient(client_id, email, password)
-        self.iam_client.login()
-
+        if lock:
+            with lock:
+                self.iam_client.login(two_fa_code=two_fa_code)
+        else:
+            self.iam_client.login(two_fa_code=two_fa_code)
         # Managers are lazily initialized through private attributes
         self._artifact_manager = None
         self._task_manager = None
