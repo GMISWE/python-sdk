@@ -118,6 +118,8 @@ def extract_gpu_num_from_serve_command(serve_args_dict: dict) -> int:
         cmd_dp_size = int(serve_args_dict["dp-size"])
     if "pipeline_parallel_size" in serve_args_dict or "pp" in serve_args_dict:
         raise ValueError("Pipeline parallel size is not supported.")
+    if "enable-dp-attention" in serve_args_dict:
+        cmd_dp_size = 1
     cmd_gpu_num = cmd_tp_size * cmd_dp_size
     if cmd_gpu_num > 8:
         raise ValueError("Only support up to 8 GPUs for single task replica.")
