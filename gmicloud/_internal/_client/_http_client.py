@@ -68,8 +68,12 @@ class HTTPClient:
             response.raise_for_status()
 
         except requests.exceptions.RequestException as e:
+            if response is None:
+                raise APIError(f"HTTP Request failed: {e}") from e
             raise APIError(f"HTTP Request failed: {response.status_code} - {str(e)}")
         except ValueError as e:
+            if response is None:
+                raise APIError(f"HTTP Request failed: {e}") from e
             # Fallback if response JSON is invalid
             raise APIError(f"Failed to parse JSON response: {response.status_code} - {response.text}")
 
